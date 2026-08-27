@@ -1,0 +1,2666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Cricket Game — Anuraj Aatanki vs Abhinandan Fussi</title>
+
+<style>
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+
+html,body{
+  margin:0;
+  min-height:100%;
+}
+
+body{
+  font-family:Arial,Helvetica,sans-serif;
+  color:#fff;
+  background:
+    radial-gradient(circle at 50% 0%,#172554 0%,#020617 55%,#000 100%);
+  padding:14px;
+}
+
+button{
+  font:inherit;
+  user-select:none;
+}
+
+#setup{
+  width:min(100%,520px);
+  margin:20px auto;
+  padding:18px;
+  background:rgba(15,23,42,.96);
+  border:2px solid #38bdf8;
+  border-radius:16px;
+  text-align:center;
+  box-shadow:0 0 35px rgba(14,165,233,.15);
+}
+
+#setup h2{
+  margin:2px 0 14px;
+  color:#fde047;
+}
+
+.setupBtn{
+  border:1px solid #64748b;
+  background:#334155;
+  color:#fff;
+  border-radius:8px;
+  padding:10px 15px;
+  margin:4px;
+  cursor:pointer;
+  font-weight:800;
+}
+
+.setupBtn:hover{
+  background:#0369a1;
+}
+
+.setupBtn.selected{
+  background:#16a34a;
+  border-color:#86efac;
+}
+
+.setupBtn:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
+
+#tossBox{
+  display:none;
+  margin-top:16px;
+}
+
+#tossResult{
+  min-height:28px;
+  margin-top:10px;
+  color:#fde047;
+  font-weight:800;
+}
+
+#choiceBox{
+  display:none;
+  margin-top:10px;
+}
+
+/* =====================================================
+   COIN
+===================================================== */
+
+#coinStage{
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:1000;
+  background:rgba(0,0,0,.82);
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  gap:18px;
+}
+
+#coin{
+  width:150px;
+  height:150px;
+  border-radius:50%;
+  border:8px solid #fef08a;
+  background:
+    radial-gradient(circle at 30% 25%,#fff7a8,#facc15 30%,#eab308 62%,#a16207 100%);
+  box-shadow:
+    0 0 20px #fde047,
+    0 0 60px rgba(250,204,21,.75),
+    inset 0 0 20px rgba(255,255,255,.8);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#78350f;
+  font-size:28px;
+  font-weight:1000;
+  transform-style:preserve-3d;
+}
+
+.coinFlip{
+  animation:coinFlip 1.5s cubic-bezier(.2,.7,.2,1);
+}
+
+@keyframes coinFlip{
+  0%{
+    transform:rotateY(0) translateY(0) scale(1);
+  }
+  20%{
+    transform:rotateY(720deg) translateY(-70px) scale(1.08);
+  }
+  45%{
+    transform:rotateY(1440deg) translateY(-110px) scale(1.14);
+  }
+  70%{
+    transform:rotateY(2160deg) translateY(-60px) scale(1.08);
+  }
+  100%{
+    transform:rotateY(2880deg) translateY(0) scale(1);
+  }
+}
+
+#coinText{
+  font-size:20px;
+  font-weight:900;
+  color:#fde68a;
+}
+
+/* =====================================================
+   MAIN DESKTOP LAYOUT
+===================================================== */
+
+.gameShell{
+  width:100%;
+  max-width:1500px;
+  margin:auto;
+  display:grid;
+  grid-template-columns:minmax(250px,1fr) minmax(430px,620px) minmax(250px,1fr);
+  gap:12px;
+  align-items:start;
+}
+
+.sideCard,
+.centerCard{
+  background:rgba(15,23,42,.88);
+  border:1px solid #334155;
+  border-radius:14px;
+  box-shadow:0 8px 30px rgba(0,0,0,.3);
+}
+
+.sideCard{
+  min-width:0;
+  overflow:hidden;
+}
+
+.sideTitle{
+  padding:11px;
+  background:rgba(30,41,59,.95);
+  border-bottom:1px solid #475569;
+  font-weight:900;
+  text-align:center;
+}
+
+.sideTitle.anuraj{
+  color:#38bdf8;
+}
+
+.sideTitle.abhi{
+  color:#fbbf24;
+}
+
+.battingList{
+  max-height:760px;
+  overflow-y:auto;
+  padding:7px;
+}
+
+.playerRow{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:7px;
+  padding:7px 6px;
+  border-bottom:1px solid rgba(100,116,139,.25);
+  font-size:12px;
+}
+
+.playerRow.active{
+  background:rgba(250,204,21,.12);
+  color:#fde047;
+}
+
+.playerRow.out{
+  opacity:.65;
+}
+
+.playerName{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.playerStats{
+  white-space:nowrap;
+  font-weight:800;
+}
+
+.playerSR{
+  display:block;
+  margin-top:2px;
+  color:#94a3b8;
+  font-size:10px;
+  font-weight:700;
+}
+
+.currentSR{
+  color:#94a3b8;
+  font-size:10px;
+  font-weight:700;
+}
+
+/* =====================================================
+   CENTER
+===================================================== */
+
+.centerCard{
+  padding:10px;
+}
+
+#header{
+  background:rgba(30,41,59,.95);
+  border:2px solid #38bdf8;
+  border-radius:11px;
+  padding:10px;
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+}
+
+#teamBatting{
+  color:#94a3b8;
+  font-size:12px;
+  margin-bottom:3px;
+}
+
+#score{
+  font-size:25px;
+  font-weight:1000;
+}
+
+#overs{
+  font-size:13px;
+  color:#cbd5e1;
+  margin-top:3px;
+}
+
+#summary{
+  text-align:right;
+  font-size:11px;
+  line-height:1.55;
+}
+
+#targetBanner{
+  display:none;
+  margin:7px 0;
+  padding:7px;
+  text-align:center;
+  border-radius:8px;
+  background:#312e81;
+  border:1px dashed #818cf8;
+  color:#ddd6fe;
+  font-size:12px;
+  font-weight:900;
+}
+
+#potmBox{
+  display:none;
+  margin:7px 0;
+  padding:8px;
+  text-align:center;
+  border-radius:8px;
+  background:rgba(120,53,15,.82);
+  border:1px solid #fbbf24;
+  color:#fef3c7;
+  font-size:12px;
+  font-weight:900;
+}
+
+#scoreScreen{
+  position:relative;
+  height:145px;
+  margin-top:7px;
+  overflow:hidden;
+  background:
+    radial-gradient(circle,#065f46,#064e3b 55%,#022c22);
+  border:2px solid #e2e8f0;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  gap:4px;
+}
+
+#message{
+  font-size:19px;
+  font-weight:1000;
+  text-transform:uppercase;
+  text-align:center;
+  z-index:5;
+}
+
+/* =====================================================
+   MILESTONE
+===================================================== */
+
+#milestone{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%) scale(.05) rotate(0deg);
+  opacity:0;
+  pointer-events:none;
+  z-index:10;
+  font-size:38px;
+  font-weight:1000;
+  white-space:nowrap;
+
+  background:
+    linear-gradient(
+      135deg,
+      #fff8b0 0%,
+      #fde047 20%,
+      #f59e0b 45%,
+      #fff7ae 60%,
+      #d97706 80%,
+      #fff4a3 100%
+    );
+
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+
+  -webkit-text-stroke:1px #92400e;
+
+  filter:
+    drop-shadow(0 0 3px #facc15)
+    drop-shadow(0 0 10px rgba(250,204,21,.8));
+}
+
+.milestoneShow{
+  animation:milestoneSpin 1s ease-out forwards;
+}
+
+@keyframes milestoneSpin{
+  0%{
+    opacity:0;
+    transform:translate(-50%,-50%) scale(.05) rotate(0deg);
+  }
+  20%{
+    opacity:1;
+    transform:translate(-50%,-50%) scale(.65) rotate(720deg);
+  }
+  48%{
+    opacity:1;
+    transform:translate(-50%,-50%) scale(1.18) rotate(1440deg);
+  }
+  72%{
+    opacity:1;
+    transform:translate(-50%,-50%) scale(1) rotate(1800deg);
+  }
+  100%{
+    opacity:0;
+    transform:translate(-50%,-50%) scale(1.12) rotate(2160deg);
+  }
+}
+
+/* =====================================================
+   CRICKET FLYING ACROSS SCREEN
+===================================================== */
+
+#flyingCricket{
+  position:absolute;
+  left:-80px;
+  top:50%;
+  transform:translateY(-50%);
+  font-size:55px;
+  opacity:0;
+  z-index:8;
+  pointer-events:none;
+}
+
+.flyCricket{
+  animation:flyCricket 1s linear forwards;
+}
+
+@keyframes flyCricket{
+  0%{
+    left:-80px;
+    opacity:0;
+    transform:translateY(-50%) scale(.7) rotate(-20deg);
+  }
+  10%{
+    opacity:1;
+  }
+  50%{
+    opacity:1;
+    transform:translateY(-50%) scale(1.2) rotate(10deg);
+  }
+  90%{
+    opacity:1;
+  }
+  100%{
+    left:calc(100% + 80px);
+    opacity:0;
+    transform:translateY(-50%) scale(.7) rotate(20deg);
+  }
+}
+
+/* =====================================================
+   CURRENT OVER
+===================================================== */
+
+#overBox{
+  margin-top:7px;
+  padding:7px;
+  background:rgba(2,6,23,.5);
+  border:1px solid #475569;
+  border-radius:7px;
+  min-height:32px;
+  text-align:center;
+  font-size:12px;
+  font-weight:800;
+}
+
+/* =====================================================
+   CURRENT BATTERS
+===================================================== */
+
+.currentBatters{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+  margin-top:7px;
+}
+
+.currentBatter{
+  background:rgba(0,0,0,.3);
+  border:1px solid #475569;
+  border-radius:7px;
+  padding:6px;
+  font-size:11px;
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+}
+
+.currentBatter.active{
+  border-color:#fde047;
+  color:#fde047;
+}
+
+/* =====================================================
+   BUTTONS
+===================================================== */
+
+.bigButtons{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:6px;
+  margin-top:7px;
+}
+
+.smallButtons{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:5px;
+  margin-top:5px;
+}
+
+.btn{
+  border:0;
+  border-radius:7px;
+  color:#fff;
+  font-weight:1000;
+  cursor:pointer;
+  min-height:38px;
+  transition:transform .06s,filter .1s;
+}
+
+.btn:hover{
+  filter:brightness(1.12);
+}
+
+.btn:active{
+  transform:scale(.92);
+}
+
+.btn:disabled{
+  opacity:.4;
+  cursor:not-allowed;
+}
+
+.run4{
+  background:#eab308;
+  height:48px;
+  font-size:19px;
+}
+
+.run6{
+  background:#22c55e;
+  height:48px;
+  font-size:19px;
+}
+
+.wicket{
+  background:#ef4444;
+  height:48px;
+  font-size:19px;
+}
+
+.r1{background:#0284c7;}
+.r2{background:#2563eb;}
+.r3{background:#7c3aed;}
+.r5{background:#c026d3;}
+.r0{background:#475569;}
+.wd{background:#0891b2;}
+.w1{background:#dc2626;}
+.nb{background:#ea580c;}
+.nb1{background:#f97316;}
+.nb2{background:#fb923c;}
+.nb4{background:#ca8a04;}
+.nb6{background:#65a30d;}
+
+.reset{
+  grid-column:span 4;
+  background:#475569;
+  min-height:35px;
+}
+
+/* =====================================================
+   SIX / FOUR / WICKET EFFECTS
+===================================================== */
+
+.flashSix{
+  animation:flashSix .55s ease;
+}
+
+.flashFour{
+  animation:flashFour .5s ease;
+}
+
+.flashWicket{
+  animation:flashWicket .4s ease;
+}
+
+@keyframes flashSix{
+  0%,100%{box-shadow:none;}
+  50%{
+    box-shadow:
+      0 0 35px #22c55e,
+      inset 0 0 35px rgba(255,255,255,.35);
+  }
+}
+
+@keyframes flashFour{
+  0%,100%{box-shadow:none;}
+  50%{
+    box-shadow:
+      0 0 30px #facc15,
+      inset 0 0 30px rgba(255,255,255,.35);
+  }
+}
+
+@keyframes flashWicket{
+  0%,100%{transform:translateX(0);}
+  20%{transform:translateX(-8px);}
+  40%{transform:translateX(8px);}
+  60%{transform:translateX(-6px);}
+  80%{transform:translateX(6px);}
+}
+
+/* =====================================================
+   RESPONSIVE MOBILE
+===================================================== */
+
+@media(max-width:900px){
+
+  body{
+    padding:7px;
+  }
+
+  .gameShell{
+    grid-template-columns:1fr;
+    max-width:620px;
+  }
+
+  .centerCard{
+    order:1;
+  }
+
+  .sideCard{
+    order:2;
+  }
+
+  .battingList{
+    max-height:300px;
+  }
+
+  #summary{
+    font-size:10px;
+  }
+
+  #milestone{
+    font-size:31px;
+  }
+
+  #scoreScreen{
+    height:135px;
+  }
+}
+
+@media(max-width:480px){
+
+  .centerCard{
+    padding:7px;
+  }
+
+  #header{
+    padding:8px;
+  }
+
+  #score{
+    font-size:22px;
+  }
+
+  .bigButtons{
+    gap:5px;
+  }
+
+  .smallButtons{
+    gap:4px;
+  }
+
+  .btn{
+    min-height:36px;
+    font-size:12px;
+  }
+
+  .run4,.run6,.wicket{
+    height:45px;
+    font-size:17px;
+  }
+
+  .currentBatters{
+    font-size:10px;
+  }
+
+  #milestone{
+    font-size:27px;
+  }
+
+  #flyingCricket{
+    font-size:46px;
+  }
+
+  #coin{
+    width:125px;
+    height:125px;
+    font-size:23px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div id="setup">
+
+  <h2>🏏 CRICKET MATCH</h2>
+
+  <div><b>SELECT OVERS</b></div>
+
+  <button class="setupBtn" data-overs="1" onclick="setOvers(1)">1 Over</button>
+  <button class="setupBtn" data-overs="5" onclick="setOvers(5)">5 Overs</button>
+  <button class="setupBtn" data-overs="20" onclick="setOvers(20)">20 Overs</button>
+  <button class="setupBtn" data-overs="50" onclick="setOvers(50)">50 Overs</button>
+
+  <div id="tossBox">
+
+    <h3>🪙 TOSS</h3>
+
+    <button id="headsBtn" class="setupBtn" onclick="doToss('Heads')">
+      HEADS
+    </button>
+
+    <button id="tailsBtn" class="setupBtn" onclick="doToss('Tails')">
+      TAILS
+    </button>
+
+    <div id="tossResult">Choose Heads or Tails</div>
+
+    <div id="choiceBox">
+
+      <button id="batFirstBtn" class="setupBtn" onclick="chooseDecision('bat')">
+        BAT FIRST
+      </button>
+
+      <button id="bowlFirstBtn" class="setupBtn" onclick="chooseDecision('bowl')">
+        BOWL FIRST
+      </button>
+
+    </div>
+
+  </div>
+</div>
+
+<div id="coinStage">
+  <div id="coin">🪙</div>
+  <div id="coinText">FLIPPING...</div>
+</div>
+
+<div class="gameShell">
+
+  <section class="sideCard">
+
+    <div class="sideTitle abhi">
+      ABHINANDAN FUSSI
+    </div>
+
+    <div id="abhiBatters" class="battingList"></div>
+
+  </section>
+
+  <main class="centerCard">
+
+    <div id="header">
+
+      <div>
+        <div id="teamBatting">
+          Batting: Anuraj Aatanki
+        </div>
+
+        <div id="score">
+          SCORE: <span id="runs">0</span>/<span id="wickets">0</span>
+        </div>
+
+        <div id="overs">
+          OVERS: <span id="overText">0.0</span> /
+          <span id="overLimit">20</span>
+        </div>
+      </div>
+
+      <div id="summary">
+        Anuraj: 0/0<br>
+        Abhinandan: Yet to bat
+      </div>
+
+    </div>
+
+    <div id="targetBanner"></div>
+
+    <div id="potmBox"></div>
+
+    <div id="scoreScreen">
+
+      <div id="message">READY</div>
+
+      <div id="milestone"></div>
+
+      <div id="flyingCricket">🏏</div>
+
+    </div>
+
+    <div id="overBox">
+      Over 1: —
+    </div>
+
+    <div class="currentBatters">
+
+      <div id="strikerBox" class="currentBatter active">
+        🏏 —
+      </div>
+
+      <div id="nonStrikerBox" class="currentBatter">
+        —
+      </div>
+
+    </div>
+
+    <div class="bigButtons">
+
+      <button class="btn run4" onclick="delivery('4')">
+        4
+      </button>
+
+      <button class="btn run6" onclick="delivery('6')">
+        6
+      </button>
+
+      <button class="btn wicket" onclick="delivery('W')">
+        W
+      </button>
+
+    </div>
+
+    <div class="smallButtons">
+
+      <button class="btn r1" onclick="delivery('1')">1</button>
+      <button class="btn r2" onclick="delivery('2')">2</button>
+      <button class="btn r3" onclick="delivery('3')">3</button>
+      <button class="btn r5" onclick="delivery('5')">5</button>
+
+      <button class="btn r0" onclick="delivery('0')">0</button>
+      <button class="btn wd" onclick="delivery('WD')">WD</button>
+      <button class="btn w1" onclick="delivery('W1')">W1</button>
+      <button class="btn nb" onclick="delivery('NB')">NB</button>
+
+      <button class="btn nb1" onclick="delivery('N1')">NB+1</button>
+      <button class="btn nb2" onclick="delivery('N2')">NB+2</button>
+      <button class="btn nb4" onclick="delivery('N4')">NB+4</button>
+      <button class="btn nb6" onclick="delivery('N6')">NB+6</button>
+
+      <button class="btn reset" onclick="resetGame()">
+        RESET / NEXT INNINGS
+      </button>
+
+    </div>
+
+  </main>
+
+  <section class="sideCard">
+
+    <div class="sideTitle anuraj">
+      ANURAJ AATANKI
+    </div>
+
+    <div id="anurajBatters" class="battingList"></div>
+
+  </section>
+
+</div>
+
+<script>
+
+/* =====================================================
+   TEAMS
+===================================================== */
+
+const ANURAJ_TEAM = [
+  "Anuraj (C) 🏏",
+  "Abhinandan 🏏",
+  "BB Anil",
+  "Rishi",
+  "Chanakya",
+  "Nicky",
+  "Kasith",
+  "Pradeep",
+  "Sagar",
+  "Tiger",
+  "Ranger"
+];
+
+const ABHINANDAN_TEAM = [
+  "Rohit (C) 🏏",
+  "Gill 🏏",
+  "Virat 🏏",
+  "Shreyas 🏏",
+  "Rahul WK 🧤🏏",
+  "Axar 🏏🎯",
+  "Hardik 🏏🎯",
+  "Bumrah 🎯",
+  "Shami 🎯",
+  "Kuldeep 🎯",
+  "Bhuvneshwar 🎯"
+];
+
+const TEAM_A = {
+  name:"Anuraj Aatanki",
+  players:ANURAJ_TEAM
+};
+
+const TEAM_B = {
+  name:"Abhinandan Fussi",
+  players:ABHINANDAN_TEAM
+};
+
+let oversLimit = 20;
+let matchStarted = false;
+let innings = 1;
+let matchOver = false;
+
+let firstTeam = null;
+let secondTeam = null;
+let battingTeam = null;
+let bowlingTeam = null;
+
+let runs = 0;
+let wickets = 0;
+let legalBalls = 0;
+let target = 0;
+
+let striker = 0;
+let nonStriker = 1;
+let nextBatter = 2;
+
+let freeHit = false;
+
+let overBalls = [];
+let overNumber = 1;
+
+let firstInningsCards = {};
+let secondInningsCards = {};
+
+let milestoneNext = 50;
+
+let audioCtx = null;
+
+function $(id){
+  return document.getElementById(id);
+}
+
+function clonePlayers(team){
+
+  const obj = {};
+
+  team.players.forEach((name,index)=>{
+
+    obj[name] = {
+      name,
+      index,
+      runs:0,
+      balls:0,
+      out:false,
+      milestones:new Set()
+    };
+
+  });
+
+  return obj;
+}
+
+function currentCards(){
+
+  return innings === 1
+    ? firstInningsCards
+    : secondInningsCards;
+
+}
+
+function formatOvers(balls){
+
+  return Math.floor(balls/6) + "." + (balls%6);
+
+}
+
+function legalBallsLimit(){
+
+  return oversLimit * 6;
+
+}
+
+/* =====================================================
+   AUDIO
+===================================================== */
+
+function initAudio(){
+
+  try{
+
+    if(!audioCtx){
+
+      audioCtx = new(
+        window.AudioContext ||
+        window.webkitAudioContext
+      )();
+
+    }
+
+    if(audioCtx.state === "suspended"){
+      audioCtx.resume();
+    }
+
+  }catch(e){}
+
+}
+
+function tone(freq,duration,type="sine",volume=.12){
+
+  try{
+
+    initAudio();
+
+    const now = audioCtx.currentTime;
+
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.type = type;
+
+    osc.frequency.setValueAtTime(freq,now);
+
+    gain.gain.setValueAtTime(volume,now);
+
+    gain.gain.exponentialRampToValueAtTime(
+      .001,
+      now+duration
+    );
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start(now);
+    osc.stop(now+duration);
+
+  }catch(e){}
+
+}
+
+function soundFour(){
+
+  tone(523,.12,"triangle",.15);
+
+  setTimeout(
+    ()=>tone(659,.14,"triangle",.15),
+    80
+  );
+
+  setTimeout(
+    ()=>tone(784,.18,"triangle",.15),
+    160
+  );
+
+}
+
+function soundSix(){
+
+  tone(330,.12,"triangle",.18);
+
+  setTimeout(
+    ()=>tone(494,.14,"triangle",.18),
+    100
+  );
+
+  setTimeout(
+    ()=>tone(659,.18,"triangle",.18),
+    200
+  );
+
+  setTimeout(
+    ()=>tone(988,.30,"sine",.18),
+    300
+  );
+
+}
+
+function soundWicket(){
+
+  tone(220,.18,"sawtooth",.16);
+
+  setTimeout(
+    ()=>tone(130,.30,"sawtooth",.16),
+    120
+  );
+
+}
+
+function soundMilestone(){
+
+  tone(523,.12,"sine",.18);
+
+  setTimeout(
+    ()=>tone(659,.12,"sine",.18),
+    120
+  );
+
+  setTimeout(
+    ()=>tone(784,.18,"sine",.18),
+    240
+  );
+
+}
+
+/* =====================================================
+   SET OVERS
+===================================================== */
+
+function setOvers(value){
+
+  if(matchStarted) return;
+
+  oversLimit=value;
+
+  $("overLimit").innerText=value;
+
+  $("tossBox").style.display="block";
+
+  document
+    .querySelectorAll("[data-overs]")
+    .forEach(btn=>{
+      btn.classList.toggle(
+        "selected",
+        Number(btn.dataset.overs)===value
+      );
+    });
+
+  $("tossResult").innerText=
+    "Choose Heads or Tails";
+
+}
+
+/* =====================================================
+   TOSS
+===================================================== */
+
+function doToss(choice){
+
+  if(matchStarted) return;
+
+  initAudio();
+
+  $("headsBtn").disabled=true;
+  $("tailsBtn").disabled=true;
+
+  const result =
+    Math.random()<.5
+      ? "Heads"
+      : "Tails";
+
+  $("coinStage").style.display="flex";
+
+  const coin=$("coin");
+
+  coin.classList.remove("coinFlip");
+
+  void coin.offsetWidth;
+
+  coin.classList.add("coinFlip");
+
+  $("coinText").innerText="FLIPPING...";
+
+  setTimeout(()=>{
+
+    $("coinStage").style.display="none";
+
+    if(choice===result){
+
+      $("tossResult").innerText=
+        "🎉 YOU WON THE TOSS! CHOOSE:";
+
+      $("choiceBox").style.display="block";
+
+      $("batFirstBtn").disabled=false;
+      $("bowlFirstBtn").disabled=false;
+
+    }else{
+
+      $("tossResult").innerText=
+        "ABHINANDAN FUSSI WON THE TOSS!";
+
+      $("batFirstBtn").disabled=true;
+      $("bowlFirstBtn").disabled=true;
+
+      setTimeout(()=>{
+
+        chooseDecision(
+          Math.random()<.5
+            ? "bat"
+            : "bowl"
+        );
+
+      },500);
+
+    }
+
+  },1500);
+
+}
+
+/* =====================================================
+   DECISION
+===================================================== */
+
+function chooseDecision(decision){
+
+  if(matchStarted) return;
+
+  startMatch(decision);
+
+}
+
+/* =====================================================
+   START MATCH
+===================================================== */
+
+function startMatch(decision){
+
+  matchStarted=true;
+  matchOver=false;
+  innings=1;
+
+  if(decision==="bat"){
+
+    firstTeam=TEAM_A;
+    secondTeam=TEAM_B;
+
+  }else{
+
+    firstTeam=TEAM_B;
+    secondTeam=TEAM_A;
+
+  }
+
+  battingTeam=firstTeam;
+  bowlingTeam=secondTeam;
+
+  runs=0;
+  wickets=0;
+  legalBalls=0;
+  target=0;
+
+  striker=0;
+  nonStriker=1;
+  nextBatter=2;
+
+  freeHit=false;
+
+  overBalls=[];
+  overNumber=1;
+
+  milestoneNext=50;
+
+  firstInningsCards=
+    clonePlayers(firstTeam);
+
+  secondInningsCards=
+    clonePlayers(secondTeam);
+
+  $("setup").style.display="none";
+
+  $("targetBanner").style.display="none";
+
+  $("potmBox").style.display="none";
+
+  renderAll();
+
+  message(
+    battingTeam.name+
+    " — INNINGS BEGINS"
+  );
+
+}
+
+/* =====================================================
+   DELIVERY
+===================================================== */
+
+function delivery(type){
+
+  if(!matchStarted || matchOver) return;
+
+  initAudio();
+
+  const cards=currentCards();
+
+  const batterName=
+    battingTeam.players[striker];
+
+  const batter=
+    cards[batterName];
+
+  if(!batter) return;
+
+  let display="";
+  let legal=true;
+  let wicket=false;
+
+  /* FREE HIT WICKET */
+
+  if(type==="W" && freeHit){
+
+    freeHit=false;
+
+    batter.balls++;
+
+    display="FREE HIT — NOT OUT";
+
+    legal=true;
+
+    addOverBall("0");
+
+    afterLegalBall();
+
+    renderAll();
+
+    message("★ FREE HIT — NOT OUT ★");
+
+    return;
+
+  }
+
+  /* RUNS */
+
+  if(type==="0"){
+
+    display="0 RUNS";
+
+  }
+
+  else if(type==="1"){
+
+    runs++;
+    batter.runs++;
+    display="1 RUN";
+
+    changeStrike();
+
+  }
+
+  else if(type==="2"){
+
+    runs+=2;
+    batter.runs+=2;
+    display="2 RUNS";
+
+  }
+
+  else if(type==="3"){
+
+    runs+=3;
+    batter.runs+=3;
+    display="3 RUNS";
+
+    changeStrike();
+
+  }
+
+  else if(type==="4"){
+
+    runs+=4;
+    batter.runs+=4;
+    display="FOUR!!";
+
+    celebrateBoundary("four");
+
+  }
+
+  else if(type==="5"){
+
+    runs+=5;
+    batter.runs+=5;
+    display="5 RUNS";
+
+  }
+
+  else if(type==="6"){
+
+    runs+=6;
+    batter.runs+=6;
+    display="SIX!!!";
+
+    celebrateBoundary("six");
+
+  }
+
+  /* WICKET */
+
+  else if(type==="W"){
+
+    batter.balls++;
+
+    batter.out=true;
+
+    wickets++;
+
+    display="WICKET";
+
+    wicket=true;
+
+    addOverBall("W");
+
+    soundWicket();
+
+    flash("wicket");
+
+    if(wickets>=10){
+
+      renderAll();
+
+      message("🏏 INNINGS ALL OUT");
+
+      setTimeout(
+        ()=>finishInnings(),
+        500
+      );
+
+      return;
+
+    }
+
+    const replacement=
+      battingTeam.players[nextBatter];
+
+    if(replacement){
+
+      striker=
+        battingTeam.players.indexOf(replacement);
+
+      nextBatter++;
+
+    }
+
+  }
+
+  /* WICKET + 1 */
+
+  else if(type==="W1"){
+
+    batter.balls++;
+
+    batter.out=true;
+
+    wickets++;
+
+    runs++;
+
+    display="WICKET + 1";
+
+    wicket=true;
+
+    legal=false;
+
+    addOverBall("W+1");
+
+    soundWicket();
+
+    flash("wicket");
+
+    if(wickets>=10){
+
+      renderAll();
+
+      message("🏏 INNINGS ALL OUT");
+
+      setTimeout(
+        ()=>finishInnings(),
+        500
+      );
+
+      return;
+
+    }
+
+    const replacement=
+      battingTeam.players[nextBatter];
+
+    if(replacement){
+
+      striker=
+        battingTeam.players.indexOf(replacement);
+
+      nextBatter++;
+
+    }
+
+  }
+
+  /* WIDE */
+
+  else if(type==="WD"){
+
+    runs++;
+
+    legal=false;
+
+    display="WIDE";
+
+    addOverBall("WD");
+
+  }
+
+  /* NO BALL */
+
+  else if(type==="NB"){
+
+    runs++;
+
+    legal=false;
+
+    freeHit=true;
+
+    display="NO BALL";
+
+    addOverBall("NB");
+
+  }
+
+  else if(type==="N1"){
+
+    runs+=2;
+
+    batter.runs++;
+
+    legal=false;
+
+    freeHit=true;
+
+    display="NO BALL + 1";
+
+    addOverBall("NB+1");
+
+    changeStrike();
+
+  }
+
+  else if(type==="N2"){
+
+    runs+=3;
+
+    batter.runs+=2;
+
+    legal=false;
+
+    freeHit=true;
+
+    display="NO BALL + 2";
+
+    addOverBall("NB+2");
+
+  }
+
+  else if(type==="N4"){
+
+    runs+=5;
+
+    batter.runs+=4;
+
+    legal=false;
+
+    freeHit=true;
+
+    display="NO BALL + FOUR";
+
+    addOverBall("NB+4");
+
+    celebrateBoundary("four");
+
+  }
+
+  else if(type==="N6"){
+
+    runs+=7;
+
+    batter.runs+=6;
+
+    legal=false;
+
+    freeHit=true;
+
+    display="NO BALL + SIX";
+
+    addOverBall("NB+6");
+
+    celebrateBoundary("six");
+
+  }
+
+  /* MILESTONE */
+
+  if(!wicket){
+
+    checkMilestone(batter);
+
+  }
+
+  /* LEGAL BALL */
+
+  if(legal){
+
+    batter.balls++;
+
+    legalBalls++;
+
+    if(legalBalls%6===0){
+
+      changeStrike();
+
+      setTimeout(()=>{
+
+        if(
+          matchOver ||
+          legalBalls>=legalBallsLimit()
+        ){
+          return;
+        }
+
+        overBalls=[];
+
+        overNumber++;
+
+        renderOver();
+
+      },700);
+
+    }
+
+  }
+
+  /* CHASE */
+
+  if(
+    innings===2 &&
+    runs>=target
+  ){
+
+    renderAll();
+
+    setTimeout(
+      ()=>finishChase(),
+      300
+    );
+
+    return;
+
+  }
+
+  /* OVERS COMPLETE */
+
+  if(
+    legalBalls>=legalBallsLimit()
+  ){
+
+    renderAll();
+
+    setTimeout(
+      ()=>finishInnings(),
+      350
+    );
+
+    return;
+
+  }
+
+  renderAll();
+
+  if(freeHit){
+
+    message("★ FREE HIT ★");
+
+  }
+
+  else if(
+    type!=="4" &&
+    type!=="6" &&
+    type!=="N4" &&
+    type!=="N6" &&
+    !wicket
+  ){
+
+    message(display);
+
+  }
+
+}
+
+/* =====================================================
+   STRIKE
+===================================================== */
+
+function changeStrike(){
+
+  const temp=striker;
+
+  striker=nonStriker;
+  nonStriker=temp;
+
+}
+
+/* =====================================================
+   OVER DISPLAY
+===================================================== */
+
+function addOverBall(ball){
+
+  overBalls.push(ball);
+
+  renderOver();
+
+}
+
+function renderOver(){
+
+  $("overBox").innerText=
+    "Over "+
+    overNumber+
+    ": "+
+    (
+      overBalls.length
+        ? overBalls.join(" ")
+        : "—"
+    );
+
+}
+
+/* =====================================================
+   BATTER MILESTONE
+===================================================== */
+
+function checkMilestone(player){
+
+  /*
+    IMPORTANT:
+    Milestones are now tracked independently
+    for EVERY batter.
+
+    So if:
+      Anuraj reaches 50  -> celebrates
+      Abhinandan reaches 50 -> celebrates too
+
+    And each batter can independently celebrate:
+      50, 100, 150, 200, 250, 300...
+  */
+
+  const nextMilestone =
+    Math.floor(player.runs / 50) * 50;
+
+  if(
+    nextMilestone >= 50 &&
+    !player.milestones.has(nextMilestone)
+  ){
+
+    player.milestones.add(nextMilestone);
+
+    showMilestone(
+      nextMilestone,
+      player.name
+    );
+
+    soundMilestone();
+
+  }
+
+}
+
+/* =====================================================
+   MILESTONE ANIMATION
+===================================================== */
+
+function showMilestone(value,playerName){
+
+  const m=$("milestone");
+
+  m.innerText=value;
+
+  m.classList.remove("milestoneShow");
+
+  void m.offsetWidth;
+
+  m.classList.add("milestoneShow");
+
+  setTimeout(()=>{
+
+    if(m.innerText===String(value)){
+
+      m.classList.remove(
+        "milestoneShow"
+      );
+
+    }
+
+  },1050);
+
+  if(value>=100){
+
+    const cricket=$("flyingCricket");
+
+    cricket.classList.remove(
+      "flyCricket"
+    );
+
+    void cricket.offsetWidth;
+
+    cricket.classList.add(
+      "flyCricket"
+    );
+
+  }
+
+  message(
+    "⭐ "+
+    value+
+    " FOR "+
+    playerName.replace(
+      / 🏏.*$/,
+      ""
+    )
+  );
+
+}
+
+/* =====================================================
+   BOUNDARY EFFECTS
+===================================================== */
+
+function celebrateBoundary(type){
+
+  flash(type);
+
+  if(type==="six"){
+
+    soundSix();
+
+    message("🚀 SIX!!!");
+
+  }else{
+
+    soundFour();
+
+    message("🔥 FOUR!!");
+
+  }
+
+}
+
+function flash(type){
+
+  const screen=$("scoreScreen");
+
+  screen.classList.remove(
+    "flashSix",
+    "flashFour",
+    "flashWicket"
+  );
+
+  void screen.offsetWidth;
+
+  if(type==="six"){
+
+    screen.classList.add(
+      "flashSix"
+    );
+
+  }
+
+  if(type==="four"){
+
+    screen.classList.add(
+      "flashFour"
+    );
+
+  }
+
+  if(type==="wicket"){
+
+    screen.classList.add(
+      "flashWicket"
+    );
+
+  }
+
+}
+
+/* =====================================================
+   MESSAGE
+===================================================== */
+
+function message(text){
+
+  $("message").innerText=text;
+
+}
+
+/* =====================================================
+   FINISH FIRST INNINGS
+===================================================== */
+
+function finishInnings(){
+
+  if(matchOver) return;
+
+  if(innings===1){
+
+    target=runs+1;
+
+    innings=2;
+
+    battingTeam=secondTeam;
+    bowlingTeam=firstTeam;
+
+    runs=0;
+    wickets=0;
+    legalBalls=0;
+
+    striker=0;
+    nonStriker=1;
+    nextBatter=2;
+
+    freeHit=false;
+
+    overBalls=[];
+    overNumber=1;
+
+    milestoneNext=50;
+
+    secondInningsCards =
+      clonePlayers(secondTeam);
+
+    $("targetBanner").style.display =
+      "block";
+
+    $("targetBanner").innerText =
+      "TARGET: " +
+      target +
+      " — NEED " +
+      target +
+      " RUNS";
+
+    renderAll();
+
+    message(
+      "🏏 " +
+      battingTeam.name +
+      " — CHASE BEGINS"
+    );
+
+    return;
+
+  }
+
+  finishMatch();
+
+}
+
+/* =====================================================
+   CHASE FINISHED
+===================================================== */
+
+function finishChase(){
+
+  if(matchOver) return;
+
+  matchOver=true;
+
+  const wicketsRemaining =
+    10-wickets;
+
+  $("targetBanner").style.display =
+    "block";
+
+  $("targetBanner").innerText =
+    "🏆 " +
+    battingTeam.name +
+    " WINS BY " +
+    wicketsRemaining +
+    " WICKETS!";
+
+  message("🏆 MATCH WON!");
+
+  renderAll();
+
+  playerOfTheMatch();
+
+}
+
+/* =====================================================
+   MATCH FINISH
+===================================================== */
+
+function finishMatch(){
+
+  if(matchOver) return;
+
+  matchOver=true;
+
+  const firstScore =
+    getInningsScore(firstTeam);
+
+  const secondScore=runs;
+
+  if(secondScore<target){
+
+    const margin =
+      target-1-secondScore;
+
+    $("targetBanner").style.display =
+      "block";
+
+    $("targetBanner").innerText =
+      "🏆 " +
+      firstTeam.name +
+      " WINS BY " +
+      margin +
+      " RUNS!";
+
+    message("🏆 MATCH OVER");
+
+  }
+
+  renderAll();
+
+  playerOfTheMatch();
+
+}
+
+/* =====================================================
+   FIRST INNINGS SCORE
+===================================================== */
+
+function getInningsScore(team){
+
+  const cards =
+    team===firstTeam
+      ? firstInningsCards
+      : secondInningsCards;
+
+  return Object.values(cards)
+    .reduce(
+      (sum,p)=>sum+p.runs,
+      0
+    );
+
+}
+
+/* =====================================================
+   RENDER EVERYTHING
+===================================================== */
+
+function renderAll(){
+
+  $("runs").innerText=runs;
+
+  $("wickets").innerText=wickets;
+
+  $("overText").innerText =
+    formatOvers(legalBalls);
+
+  $("overLimit").innerText =
+    oversLimit;
+
+  $("teamBatting").innerText =
+    "Batting: " +
+    (
+      battingTeam
+        ? battingTeam.name
+        : "Anuraj Aatanki"
+    );
+
+  renderSummary();
+
+  renderCurrentBatters();
+
+  renderBattingCards();
+
+  renderOver();
+
+  renderTarget();
+
+}
+
+/* =====================================================
+   SUMMARY
+===================================================== */
+
+function renderSummary(){
+
+  if(!firstTeam){
+
+    $("summary").innerHTML =
+      "Anuraj: 0/0<br>" +
+      "Abhinandan: Yet to bat";
+
+    return;
+
+  }
+
+  let firstScore=0;
+  let firstWickets=0;
+
+  Object.values(firstInningsCards)
+    .forEach(p=>{
+
+      firstScore+=p.runs;
+
+      if(p.out){
+        firstWickets++;
+      }
+
+    });
+
+  if(innings===1){
+
+    const firstLabel =
+      firstTeam===TEAM_A
+        ? "Anuraj"
+        : "Abhinandan";
+
+    const secondLabel =
+      secondTeam===TEAM_A
+        ? "Anuraj"
+        : "Abhinandan";
+
+    $("summary").innerHTML =
+      firstLabel +
+      ": " +
+      firstScore +
+      "/" +
+      firstWickets +
+      "<br>" +
+      secondLabel +
+      ": Yet to bat";
+
+  }else{
+
+    const firstLabel =
+      firstTeam===TEAM_A
+        ? "Anuraj"
+        : "Abhinandan";
+
+    const secondLabel =
+      secondTeam===TEAM_A
+        ? "Anuraj"
+        : "Abhinandan";
+
+    $("summary").innerHTML =
+      firstLabel +
+      ": " +
+      firstScore +
+      "/" +
+      firstWickets +
+      "<br>" +
+      secondLabel +
+      ": " +
+      runs +
+      "/" +
+      wickets;
+
+  }
+
+}
+
+/* =====================================================
+   CURRENT BATTERS
+===================================================== */
+
+function renderCurrentBatters(){
+
+  if(!battingTeam){
+
+    $("strikerBox").innerText="🏏 —";
+    $("nonStrikerBox").innerText="—";
+
+    return;
+
+  }
+
+  const cards=currentCards();
+
+  const s =
+    battingTeam.players[striker];
+
+  const ns =
+    battingTeam.players[nonStriker];
+
+  const strikerData=cards[s];
+
+  const nonData=cards[ns];
+
+  const strikerSR =
+    strikerData.balls>0
+      ? (
+          strikerData.runs /
+          strikerData.balls *
+          100
+        ).toFixed(1)
+      : "0.0";
+
+  const nonStrikerSR =
+    nonData.balls>0
+      ? (
+          nonData.runs /
+          nonData.balls *
+          100
+        ).toFixed(1)
+      : "0.0";
+
+  $("strikerBox").innerHTML =
+    "🏏 " +
+    s +
+    "  " +
+    strikerData.runs +
+    "(" +
+    strikerData.balls +
+    ")* " +
+    "<span class=\"currentSR\">" +
+    "SR " +
+    strikerSR +
+    "</span>";
+
+  $("nonStrikerBox").innerHTML =
+    ns +
+    "  " +
+    nonData.runs +
+    "(" +
+    nonData.balls +
+    ") " +
+    "<span class=\"currentSR\">" +
+    "SR " +
+    nonStrikerSR +
+    "</span>";
+
+}
+
+/* =====================================================
+   FULL BATTING CARDS
+===================================================== */
+
+function renderBattingCards(){
+
+  renderTeamCard(
+    TEAM_A,
+    $("anurajBatters")
+  );
+
+  renderTeamCard(
+    TEAM_B,
+    $("abhiBatters")
+  );
+
+}
+
+function renderTeamCard(team,container){
+
+  let cards=null;
+
+  if(team===firstTeam){
+
+    cards=firstInningsCards;
+
+  }
+
+  else if(
+    team===secondTeam &&
+    innings===2
+  ){
+
+    cards=secondInningsCards;
+
+  }
+
+  else if(
+    team===secondTeam &&
+    !matchStarted
+  ){
+
+    cards=null;
+
+  }
+
+  else if(
+    team===TEAM_A &&
+    secondInningsCards[
+      team.players[0]
+    ]
+  ){
+
+    cards=secondInningsCards;
+
+  }
+
+  else if(
+    team===TEAM_B &&
+    secondInningsCards[
+      team.players[0]
+    ]
+  ){
+
+    cards=secondInningsCards;
+
+  }
+
+  container.innerHTML="";
+
+  team.players.forEach(
+    (name,index)=>{
+
+      const p =
+        cards && cards[name]
+          ? cards[name]
+          : {
+              name,
+              runs:0,
+              balls:0,
+              out:false
+            };
+
+      const isActive =
+        battingTeam===team &&
+        (
+          index===striker ||
+          index===nonStriker
+        ) &&
+        !p.out;
+
+      const row =
+        document.createElement("div");
+
+      row.className =
+        "playerRow" +
+        (
+          isActive
+            ? " active"
+            : ""
+        ) +
+        (
+          p.out
+            ? " out"
+            : ""
+        );
+
+      let status="Yet to bat";
+      let sr="0.0";
+
+      if(
+        p.balls>0 ||
+        p.runs>0 ||
+        p.out
+      ){
+
+        sr =
+          p.balls>0
+            ? (
+                p.runs /
+                p.balls *
+                100
+              ).toFixed(1)
+            : "0.0";
+
+        status =
+          p.runs +
+          "(" +
+          p.balls +
+          ")" +
+          (
+            p.out
+              ? " OUT"
+              : "*"
+          );
+
+      }
+
+      row.innerHTML =
+        '<div class="playerName">' +
+        (
+          isActive
+            ? "🏏 "
+            : ""
+        ) +
+        name +
+        "</div>" +
+
+        '<div class="playerStats">' +
+        status +
+
+        (
+          p.balls>0 ||
+          p.runs>0 ||
+          p.out
+
+            ? '<span class="playerSR">' +
+              "SR: " +
+              sr +
+              "</span>"
+
+            : ""
+        ) +
+
+        "</div>";
+
+      container.appendChild(row);
+
+    }
+  );
+
+}
+
+/* =====================================================
+   TARGET
+===================================================== */
+
+function renderTarget(){
+
+  if(
+    innings!==2 ||
+    !target
+  ){
+
+    $("targetBanner").style.display =
+      "none";
+
+    return;
+
+  }
+
+  $("targetBanner").style.display =
+    "block";
+
+  if(matchOver){
+
+    return;
+
+  }
+
+  const needed =
+    Math.max(
+      0,
+      target-runs
+    );
+
+  const ballsLeft =
+    Math.max(
+      0,
+      legalBallsLimit()-legalBalls
+    );
+
+  $("targetBanner").innerText =
+    "TARGET: " +
+    target +
+    " | NEED " +
+    needed +
+    " FROM " +
+    ballsLeft +
+    " BALLS";
+
+}
+
+/* =====================================================
+   PLAYER OF THE MATCH
+===================================================== */
+
+function playerOfTheMatch(){
+
+  const candidates=[];
+
+  [
+    firstInningsCards,
+    secondInningsCards
+  ].forEach(cards=>{
+
+    Object.values(cards)
+      .forEach(p=>{
+
+        if(!p) return;
+
+        candidates.push({
+
+          name:p.name,
+
+          runs:p.runs || 0,
+
+          balls:p.balls || 0,
+
+          out:!!p.out,
+
+          sr:
+            p.balls>0
+              ? (
+                  p.runs /
+                  p.balls
+                ) * 100
+              : 0
+
+        });
+
+      });
+
+  });
+
+  if(!candidates.length){
+
+    return null;
+
+  }
+
+  /*
+    POTM algorithm:
+    1. Highest runs
+    2. Highest strike rate
+    3. Fewer balls faced
+    4. Not-out preferred
+    5. Alphabetical name as final deterministic tie-break
+  */
+
+  candidates.sort((a,b)=>{
+
+    if(b.runs!==a.runs){
+
+      return b.runs-a.runs;
+
+    }
+
+    if(b.sr!==a.sr){
+
+      return b.sr-a.sr;
+
+    }
+
+    if(a.balls!==b.balls){
+
+      return a.balls-b.balls;
+
+    }
+
+    if(a.out!==b.out){
+
+      return a.out ? 1 : -1;
+
+    }
+
+    return a.name.localeCompare(b.name);
+
+  });
+
+  const best=candidates[0];
+
+  $("potmBox").style.display =
+    "block";
+
+  $("potmBox").innerHTML =
+    "🏆 PLAYER OF THE MATCH<br>" +
+
+    '<strong style="font-size:16px;color:#fde047;">' +
+
+    best.name +
+
+    "</strong><br>" +
+
+    best.runs +
+
+    "(" +
+
+    best.balls +
+
+    ")" +
+
+    " &nbsp; | &nbsp; SR: " +
+
+    best.sr.toFixed(1);
+
+  return best;
+
+}
+
+/* =====================================================
+   RESET
+===================================================== */
+
+function resetGame(){
+
+  matchStarted=false;
+  matchOver=false;
+
+  innings=1;
+
+  firstTeam=null;
+  secondTeam=null;
+  battingTeam=null;
+  bowlingTeam=null;
+
+  runs=0;
+  wickets=0;
+  legalBalls=0;
+  target=0;
+
+  striker=0;
+  nonStriker=1;
+  nextBatter=2;
+
+  freeHit=false;
+
+  overBalls=[];
+  overNumber=1;
+
+  firstInningsCards={};
+  secondInningsCards={};
+
+  milestoneNext=50;
+
+  $("setup").style.display="block";
+
+  $("tossBox").style.display="none";
+  $("choiceBox").style.display="none";
+
+  $("headsBtn").disabled=false;
+  $("tailsBtn").disabled=false;
+
+  $("batFirstBtn").disabled=false;
+  $("bowlFirstBtn").disabled=false;
+
+  $("tossResult").innerText =
+    "Choose Heads or Tails";
+
+  document
+    .querySelectorAll("[data-overs]")
+    .forEach(btn=>{
+      btn.classList.remove("selected");
+    });
+
+  $("targetBanner").style.display =
+    "none";
+
+  $("potmBox").style.display =
+    "none";
+
+  $("potmBox").innerHTML="";
+
+  $("message").innerText="READY";
+
+  $("runs").innerText="0";
+  $("wickets").innerText="0";
+  $("overText").innerText="0.0";
+  $("overLimit").innerText=oversLimit;
+
+  $("overBox").innerText="Over 1: —";
+
+  $("strikerBox").innerText="🏏 —";
+  $("nonStrikerBox").innerText="—";
+
+  renderBattingCards();
+
+}
+
+/* =====================================================
+   INITIAL
+===================================================== */
+
+renderAll();
+
+</script>
+
+</body>
+</html>
