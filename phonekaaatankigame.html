@@ -1,0 +1,3514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#020617">
+<title>Cricket Game — Touch Edition</title>
+
+<style>
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+  -webkit-touch-callout:none;
+}
+
+html,body{
+  margin:0;
+  padding:0;
+  min-height:100%;
+  width:100%;
+}
+
+body{
+  font-family:Arial,Helvetica,sans-serif;
+  color:#fff;
+  background:
+    radial-gradient(circle at 50% 0%,#172554 0%,#020617 55%,#000 100%);
+  padding:
+    max(8px,env(safe-area-inset-top))
+    max(8px,env(safe-area-inset-right))
+    max(8px,env(safe-area-inset-bottom))
+    max(8px,env(safe-area-inset-left));
+  overflow-x:hidden;
+  overscroll-behavior:none;
+  touch-action:manipulation;
+}
+
+button{
+  font:inherit;
+  user-select:none;
+  -webkit-user-select:none;
+  touch-action:manipulation;
+}
+
+/* =========================
+   SETUP
+========================= */
+
+#setup{
+  width:min(100%,520px);
+  margin:20px auto;
+  padding:18px;
+  background:rgba(15,23,42,.97);
+  border:2px solid #38bdf8;
+  border-radius:16px;
+  text-align:center;
+  box-shadow:0 0 35px rgba(14,165,233,.15);
+}
+
+#setup h2{
+  margin:2px 0 14px;
+  color:#fde047;
+}
+
+.setupBtn{
+  border:1px solid #64748b;
+  background:#334155;
+  color:#fff;
+  border-radius:9px;
+  padding:12px 16px;
+  margin:4px;
+  cursor:pointer;
+  font-weight:900;
+  min-height:46px;
+  touch-action:manipulation;
+  transition:
+    transform .08s ease,
+    filter .12s ease,
+    background .15s ease;
+}
+
+.setupBtn:active{
+  transform:scale(.94);
+  filter:brightness(1.15);
+}
+
+.setupBtn.selected{
+  background:#16a34a;
+  border-color:#86efac;
+  box-shadow:0 0 14px rgba(34,197,94,.35);
+}
+
+.setupBtn:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
+
+#tossBox{
+  display:none;
+  margin-top:16px;
+}
+
+#tossResult{
+  min-height:28px;
+  margin-top:10px;
+  color:#fde047;
+  font-weight:900;
+}
+
+#choiceBox{
+  display:none;
+  margin-top:10px;
+}
+
+/* =========================
+   COIN
+========================= */
+
+#coinStage{
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:1000;
+  background:rgba(0,0,0,.86);
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  gap:18px;
+  touch-action:none;
+}
+
+#coin{
+  width:150px;
+  height:150px;
+  border-radius:50%;
+  border:8px solid #fef08a;
+  background:
+    radial-gradient(circle at 30% 25%,#fff7a8,#facc15 30%,#eab308 62%,#a16207 100%);
+  box-shadow:
+    0 0 20px #fde047,
+    0 0 60px rgba(250,204,21,.75),
+    inset 0 0 20px rgba(255,255,255,.8);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#78350f;
+  font-size:28px;
+  font-weight:1000;
+  transform-style:preserve-3d;
+  backface-visibility:visible;
+}
+
+.coinFlip{
+  animation:coinFlip 1.5s cubic-bezier(.2,.7,.2,1);
+}
+
+@keyframes coinFlip{
+  0%{
+    transform:rotateY(0) translateY(0) scale(1);
+  }
+  20%{
+    transform:rotateY(720deg) translateY(-70px) scale(1.08);
+  }
+  45%{
+    transform:rotateY(1440deg) translateY(-110px) scale(1.14);
+  }
+  70%{
+    transform:rotateY(2160deg) translateY(-60px) scale(1.08);
+  }
+  100%{
+    transform:rotateY(2880deg) translateY(0) scale(1);
+  }
+}
+
+#coinText{
+  font-size:20px;
+  font-weight:900;
+  color:#fde68a;
+}
+
+/* =========================
+   GAME LAYOUT
+========================= */
+
+.gameShell{
+  width:100%;
+  max-width:1500px;
+  margin:auto;
+  display:grid;
+  grid-template-columns:
+    minmax(250px,1fr)
+    minmax(430px,620px)
+    minmax(250px,1fr);
+  gap:12px;
+  align-items:start;
+}
+
+.sideCard,
+.centerCard{
+  background:rgba(15,23,42,.90);
+  border:1px solid #334155;
+  border-radius:14px;
+  box-shadow:0 8px 30px rgba(0,0,0,.3);
+}
+
+.sideCard{
+  min-width:0;
+  overflow:hidden;
+}
+
+.sideTitle{
+  padding:11px;
+  background:rgba(30,41,59,.97);
+  border-bottom:1px solid #475569;
+  font-weight:900;
+  text-align:center;
+}
+
+.sideTitle.anuraj{
+  color:#38bdf8;
+}
+
+.sideTitle.abhi{
+  color:#fbbf24;
+}
+
+.battingList{
+  max-height:760px;
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding:7px;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+  scrollbar-width:thin;
+  touch-action:pan-y;
+}
+
+.playerRow{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:7px;
+  padding:9px 6px;
+  border-bottom:1px solid rgba(100,116,139,.25);
+  font-size:12px;
+  min-height:44px;
+  align-items:center;
+}
+
+.playerRow.active{
+  background:rgba(250,204,21,.12);
+  color:#fde047;
+}
+
+.playerRow.out{
+  opacity:.65;
+}
+
+.playerName{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.playerStats{
+  white-space:nowrap;
+  font-weight:800;
+  text-align:right;
+}
+
+.playerSR{
+  display:block;
+  margin-top:2px;
+  color:#94a3b8;
+  font-size:10px;
+  font-weight:700;
+}
+
+.currentSR{
+  color:#94a3b8;
+  font-size:10px;
+  font-weight:700;
+}
+
+/* =========================
+   CENTER
+========================= */
+
+.centerCard{
+  padding:10px;
+}
+
+#header{
+  background:rgba(30,41,59,.97);
+  border:2px solid #38bdf8;
+  border-radius:11px;
+  padding:10px;
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+}
+
+#teamBatting{
+  color:#94a3b8;
+  font-size:12px;
+  margin-bottom:3px;
+}
+
+#score{
+  font-size:25px;
+  font-weight:1000;
+}
+
+#overs{
+  font-size:13px;
+  color:#cbd5e1;
+  margin-top:3px;
+}
+
+#summary{
+  text-align:right;
+  font-size:11px;
+  line-height:1.55;
+}
+
+#targetBanner{
+  display:none;
+  margin:7px 0;
+  padding:8px;
+  text-align:center;
+  border-radius:8px;
+  background:#312e81;
+  border:1px dashed #818cf8;
+  color:#ddd6fe;
+  font-size:12px;
+  font-weight:900;
+}
+
+#potmBox{
+  display:none;
+  margin:7px 0;
+  padding:8px;
+  text-align:center;
+  border-radius:8px;
+  background:rgba(120,53,15,.82);
+  border:1px solid #fbbf24;
+  color:#fef3c7;
+  font-size:12px;
+  font-weight:900;
+}
+
+/* =========================
+   SCORE SCREEN
+========================= */
+
+#scoreScreen{
+  position:relative;
+  height:145px;
+  margin-top:7px;
+  overflow:hidden;
+  background:
+    radial-gradient(circle,#065f46,#064e3b 55%,#022c22);
+  border:2px solid #e2e8f0;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  gap:4px;
+  isolation:isolate;
+}
+
+#scoreScreen::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:
+    linear-gradient(
+      115deg,
+      transparent 0%,
+      rgba(255,255,255,.04) 45%,
+      rgba(255,255,255,.09) 50%,
+      rgba(255,255,255,.04) 55%,
+      transparent 100%
+    );
+  animation:screenSweep 3.5s linear infinite;
+}
+
+@keyframes screenSweep{
+  from{
+    transform:translateX(-110%);
+  }
+  to{
+    transform:translateX(110%);
+  }
+}
+
+#message{
+  font-size:19px;
+  font-weight:1000;
+  text-transform:uppercase;
+  text-align:center;
+  z-index:5;
+  padding:0 8px;
+  text-shadow:0 2px 8px rgba(0,0,0,.55);
+}
+
+/* =========================
+   MILESTONE
+========================= */
+
+#milestone{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%) scale(.05);
+  opacity:0;
+  pointer-events:none;
+  z-index:30;
+  font-size:38px;
+  font-weight:1000;
+  white-space:nowrap;
+  background:
+    linear-gradient(
+      135deg,
+      #fff8b0 0%,
+      #fde047 20%,
+      #f59e0b 45%,
+      #fff7ae 60%,
+      #d97706 80%,
+      #fff4a3 100%
+    );
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+  -webkit-text-stroke:1px #92400e;
+  filter:
+    drop-shadow(0 0 3px #facc15)
+    drop-shadow(0 0 10px rgba(250,204,21,.8));
+}
+
+.milestoneShow{
+  animation:milestoneSpin 1s ease-out forwards;
+}
+
+@keyframes milestoneSpin{
+  0%{
+    opacity:0;
+    transform:translate(-50%,-50%) scale(.05) rotate(0deg);
+  }
+  20%{
+    opacity:1;
+    transform:translate(-50%,-50%) scale(.65) rotate(720deg);
+  }
+  48%{
+    opacity:1;
+    transform:translate(-50%,-50%) scale(1.18) rotate(1440deg);
+  }
+  72%{
+    opacity:1;
+    transform:translate(-50%,-50%) scale(1) rotate(1800deg);
+  }
+  100%{
+    opacity:0;
+    transform:translate(-50%,-50%) scale(1.12) rotate(2160deg);
+  }
+}
+
+/* =========================
+   FLYING CRICKET
+========================= */
+
+#flyingCricket{
+  position:absolute;
+  left:-80px;
+  top:50%;
+  transform:translateY(-50%);
+  font-size:55px;
+  opacity:0;
+  z-index:18;
+  pointer-events:none;
+}
+
+.flyCricket{
+  animation:flyCricket 1s linear forwards;
+}
+
+@keyframes flyCricket{
+  0%{
+    left:-80px;
+    opacity:0;
+    transform:translateY(-50%) scale(.7) rotate(-20deg);
+  }
+  10%{
+    opacity:1;
+  }
+  50%{
+    opacity:1;
+    transform:translateY(-50%) scale(1.2) rotate(10deg);
+  }
+  90%{
+    opacity:1;
+  }
+  100%{
+    left:calc(100% + 80px);
+    opacity:0;
+    transform:translateY(-50%) scale(.7) rotate(20deg);
+  }
+}
+
+/* =========================
+   JET EFFECT
+========================= */
+
+#jetEffect{
+  position:absolute;
+  left:-90px;
+  top:18%;
+  font-size:42px;
+  opacity:0;
+  z-index:17;
+  pointer-events:none;
+  filter:drop-shadow(0 0 7px rgba(255,255,255,.8));
+}
+
+.jetFly{
+  animation:jetFly .8s cubic-bezier(.2,.8,.2,1) forwards;
+}
+
+@keyframes jetFly{
+  0%{
+    left:-90px;
+    top:12%;
+    opacity:0;
+    transform:rotate(-8deg) scale(.7);
+  }
+  18%{
+    opacity:1;
+  }
+  62%{
+    left:62%;
+    top:43%;
+    opacity:1;
+    transform:rotate(-2deg) scale(1);
+  }
+  78%{
+    left:67%;
+    top:46%;
+    opacity:1;
+    transform:rotate(0deg) scale(1.02);
+  }
+  100%{
+    left:76%;
+    top:49%;
+    opacity:0;
+    transform:rotate(6deg) scale(.82);
+  }
+}
+
+/* =========================
+   500 MEGA PNG
+   Put cricket_500_transparent.png
+   beside this HTML file.
+========================= */
+
+#mega500{
+  position:absolute;
+  left:-280px;
+  top:50%;
+  width:230px;
+  height:230px;
+  object-fit:contain;
+  opacity:0;
+  z-index:40;
+  pointer-events:none;
+  transform:translateY(-50%) scale(.45) rotate(-10deg);
+  filter:
+    drop-shadow(0 0 8px rgba(255,255,255,.95))
+    drop-shadow(0 0 22px rgba(250,204,21,.95))
+    drop-shadow(0 0 45px rgba(250,204,21,.55));
+  will-change:left,transform,opacity;
+}
+
+.mega500Show{
+  animation:mega500Fly 1.15s cubic-bezier(.16,.82,.2,1) forwards;
+}
+
+@keyframes mega500Fly{
+  0%{
+    left:-280px;
+    opacity:0;
+    transform:translateY(-50%) scale(.35) rotate(-14deg);
+  }
+
+  8%{
+    opacity:1;
+  }
+
+  24%{
+    left:10%;
+    opacity:1;
+    transform:translateY(-50%) scale(.72) rotate(-7deg);
+  }
+
+  48%{
+    left:39%;
+    opacity:1;
+    transform:translateY(-50%) scale(1.08) rotate(0deg);
+  }
+
+  60%{
+    left:49%;
+    opacity:1;
+    transform:translateY(-50%) scale(1.12) rotate(2deg);
+  }
+
+  76%{
+    left:68%;
+    opacity:1;
+    transform:translateY(-50%) scale(.96) rotate(5deg);
+  }
+
+  100%{
+    left:calc(100% + 45px);
+    opacity:0;
+    transform:translateY(-50%) scale(.55) rotate(11deg);
+  }
+}
+
+/* =========================
+   OVER
+========================= */
+
+#overBox{
+  margin-top:7px;
+  padding:8px;
+  background:rgba(2,6,23,.65);
+  border:1px solid #475569;
+  border-radius:7px;
+  min-height:34px;
+  text-align:center;
+  font-size:12px;
+  font-weight:900;
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+}
+
+/* =========================
+   BATTERS
+========================= */
+
+.currentBatters{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+  margin-top:7px;
+}
+
+.currentBatter{
+  background:rgba(0,0,0,.3);
+  border:1px solid #475569;
+  border-radius:7px;
+  padding:7px;
+  font-size:11px;
+  min-height:40px;
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+}
+
+.currentBatter.active{
+  border-color:#fde047;
+  color:#fde047;
+  box-shadow:0 0 10px rgba(250,204,21,.12);
+}
+
+/* =========================
+   TOUCH BUTTONS
+========================= */
+
+.bigButtons{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:7px;
+  margin-top:8px;
+}
+
+.smallButtons{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:6px;
+  margin-top:6px;
+}
+
+.btn{
+  border:0;
+  border-radius:8px;
+  color:#fff;
+  font-weight:1000;
+  cursor:pointer;
+  min-height:44px;
+  padding:7px 4px;
+  transition:
+    transform .07s ease,
+    filter .1s ease,
+    box-shadow .12s ease;
+  touch-action:manipulation;
+  -webkit-user-select:none;
+  user-select:none;
+}
+
+.btn:hover{
+  filter:brightness(1.08);
+}
+
+.btn:active{
+  transform:scale(.91);
+  filter:brightness(1.2);
+}
+
+.btn:disabled{
+  opacity:.4;
+  cursor:not-allowed;
+  transform:none;
+}
+
+.run4{
+  background:#eab308;
+  height:50px;
+  font-size:19px;
+}
+
+.run6{
+  background:#22c55e;
+  height:50px;
+  font-size:19px;
+}
+
+.wicket{
+  background:#ef4444;
+  height:50px;
+  font-size:19px;
+}
+
+.r1{background:#0284c7}
+.r2{background:#2563eb}
+.r3{background:#7c3aed}
+.r5{background:#c026d3}
+.r0{background:#475569}
+.wd{background:#0891b2}
+.w1{background:#dc2626}
+.nb{background:#ea580c}
+.nb1{background:#f97316}
+.nb2{background:#fb923c}
+.nb4{background:#ca8a04}
+.nb6{background:#65a30d}
+
+.reset{
+  grid-column:span 4;
+  background:#475569;
+  min-height:44px;
+}
+
+/* =========================
+   FLASHES
+========================= */
+
+.flashSix{
+  animation:flashSix .55s ease;
+}
+
+.flashFour{
+  animation:flashFour .5s ease;
+}
+
+.flashWicket{
+  animation:flashWicket .4s ease;
+}
+
+@keyframes flashSix{
+  0%,100%{
+    box-shadow:none;
+  }
+  50%{
+    box-shadow:
+      0 0 35px #22c55e,
+      inset 0 0 35px rgba(255,255,255,.35);
+  }
+}
+
+@keyframes flashFour{
+  0%,100%{
+    box-shadow:none;
+  }
+  50%{
+    box-shadow:
+      0 0 30px #facc15,
+      inset 0 0 30px rgba(255,255,255,.35);
+  }
+}
+
+@keyframes flashWicket{
+  0%,100%{
+    transform:translateX(0);
+  }
+  20%{
+    transform:translateX(-8px);
+  }
+  40%{
+    transform:translateX(8px);
+  }
+  60%{
+    transform:translateX(-6px);
+  }
+  80%{
+    transform:translateX(6px);
+  }
+}
+
+/* =========================
+   MOBILE PORTRAIT
+========================= */
+
+@media(max-width:900px){
+
+  body{
+    padding:
+      max(6px,env(safe-area-inset-top))
+      max(6px,env(safe-area-inset-right))
+      max(6px,env(safe-area-inset-bottom))
+      max(6px,env(safe-area-inset-left));
+  }
+
+  .gameShell{
+    display:flex;
+    flex-direction:column;
+    width:100%;
+    max-width:620px;
+    margin:auto;
+    gap:8px;
+  }
+
+  .centerCard{
+    order:1;
+    width:100%;
+  }
+
+  .sideCard{
+    order:2;
+    width:100%;
+  }
+
+  .sideTitle{
+    position:sticky;
+    top:0;
+    z-index:3;
+  }
+
+  .battingList{
+    max-height:250px;
+    min-height:120px;
+  }
+
+  #summary{
+    font-size:10px;
+  }
+
+  #milestone{
+    font-size:31px;
+  }
+
+  #scoreScreen{
+    height:140px;
+  }
+
+  #mega500{
+    width:185px;
+    height:185px;
+  }
+}
+
+/* =========================
+   SMALL PHONE
+========================= */
+
+@media(max-width:480px){
+
+  .centerCard{
+    padding:6px;
+  }
+
+  #header{
+    padding:8px;
+    gap:6px;
+  }
+
+  #score{
+    font-size:21px;
+  }
+
+  #teamBatting{
+    font-size:11px;
+  }
+
+  #overs{
+    font-size:12px;
+  }
+
+  #summary{
+    font-size:9px;
+  }
+
+  #scoreScreen{
+    height:132px;
+  }
+
+  #message{
+    font-size:17px;
+  }
+
+  .bigButtons{
+    gap:5px;
+  }
+
+  .smallButtons{
+    gap:4px;
+  }
+
+  .btn{
+    min-height:43px;
+    font-size:12px;
+  }
+
+  .run4,
+  .run6,
+  .wicket{
+    height:47px;
+    font-size:18px;
+  }
+
+  .currentBatters{
+    gap:5px;
+  }
+
+  .currentBatter{
+    font-size:10px;
+    padding:6px;
+  }
+
+  #milestone{
+    font-size:27px;
+  }
+
+  #flyingCricket{
+    font-size:46px;
+  }
+
+  #jetEffect{
+    font-size:34px;
+  }
+
+  #coin{
+    width:125px;
+    height:125px;
+    font-size:23px;
+  }
+
+  #mega500{
+    width:155px;
+    height:155px;
+  }
+}
+
+/* =========================
+   VERY SMALL PHONES
+========================= */
+
+@media(max-width:360px){
+
+  #score{
+    font-size:19px;
+  }
+
+  #message{
+    font-size:15px;
+  }
+
+  .btn{
+    min-height:42px;
+    font-size:11px;
+  }
+
+  .run4,
+  .run6,
+  .wicket{
+    font-size:16px;
+  }
+
+  #mega500{
+    width:135px;
+    height:135px;
+  }
+}
+
+/* Reduce animation only if the device explicitly asks for it */
+@media(prefers-reduced-motion:reduce){
+  *,
+  *::before,
+  *::after{
+    animation-duration:.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.01ms !important;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div id="setup">
+
+  <h2>🏏 CRICKET MATCH</h2>
+
+  <div><b>SELECT OVERS</b></div>
+
+  <button class="setupBtn" data-overs="1" onclick="setOvers(1)">1 Over</button>
+  <button class="setupBtn" data-overs="5" onclick="setOvers(5)">5 Overs</button>
+  <button class="setupBtn" data-overs="20" onclick="setOvers(20)">20 Overs</button>
+  <button class="setupBtn" data-overs="50" onclick="setOvers(50)">50 Overs</button>
+
+  <div id="tossBox">
+
+    <h3>🪙 TOSS</h3>
+
+    <button id="headsBtn" class="setupBtn" onclick="doToss('Heads')">
+      HEADS
+    </button>
+
+    <button id="tailsBtn" class="setupBtn" onclick="doToss('Tails')">
+      TAILS
+    </button>
+
+    <div id="tossResult">Choose Heads or Tails</div>
+
+    <div id="choiceBox">
+
+      <button
+        id="batFirstBtn"
+        class="setupBtn"
+        onclick="chooseDecision('bat')">
+        BAT FIRST
+      </button>
+
+      <button
+        id="bowlFirstBtn"
+        class="setupBtn"
+        onclick="chooseDecision('bowl')">
+        BOWL FIRST
+      </button>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- COIN TOSS -->
+
+<div id="coinStage">
+
+  <div id="coin">🪙</div>
+
+  <div id="coinText">
+    FLIPPING...
+  </div>
+
+</div>
+
+
+<div class="gameShell">
+
+  <!-- ABHINANDAN SIDE -->
+
+  <section class="sideCard">
+
+    <div class="sideTitle abhi">
+      ABHINANDAN FUSSI
+    </div>
+
+    <div id="abhiBatters" class="battingList"></div>
+
+  </section>
+
+
+  <!-- CENTER GAME -->
+
+  <main class="centerCard">
+
+    <div id="header">
+
+      <div>
+
+        <div id="teamBatting">
+          Batting: Anuraj Aatanki
+        </div>
+
+        <div id="score">
+
+          SCORE:
+          <span id="runs">0</span>/<span id="wickets">0</span>
+
+        </div>
+
+        <div id="overs">
+
+          OVERS:
+          <span id="overText">0.0</span> /
+          <span id="overLimit">20</span>
+
+        </div>
+
+      </div>
+
+      <div id="summary">
+
+        Anuraj: 0/0<br>
+        Abhinandan: Yet to bat
+
+      </div>
+
+    </div>
+
+
+    <div id="targetBanner"></div>
+
+    <div id="potmBox"></div>
+
+
+    <!-- SCORE CHECKER -->
+
+    <div id="scoreScreen">
+
+      <div id="message">
+        READY
+      </div>
+
+      <div id="milestone"></div>
+
+      <div id="flyingCricket">
+        🏏
+      </div>
+
+      <div id="jetEffect">
+        ✈️
+      </div>
+
+
+      <!--
+        EXACT 500-RUN PNG.
+
+        IMPORTANT:
+        Keep "cricket_500_transparent.png" in the
+        SAME FOLDER as this HTML file.
+
+        This avoids a broken/empty base64 image and
+        allows the supplied transparent PNG to render
+        at full quality.
+      -->
+
+      <img
+        id="mega500"
+        src="cricket_500_transparent.png"
+        alt=""
+        draggable="false"
+      >
+
+    </div>
+
+
+    <!-- OVER DISPLAY -->
+
+    <div id="overBox">
+      Over 1: —
+    </div>
+
+
+    <!-- CURRENT BATTERS -->
+
+    <div class="currentBatters">
+
+      <div
+        id="strikerBox"
+        class="currentBatter active">
+        🏏 —
+      </div>
+
+      <div
+        id="nonStrikerBox"
+        class="currentBatter">
+        —
+      </div>
+
+    </div>
+
+
+    <!-- MAIN TOUCH BUTTONS -->
+
+    <div class="bigButtons">
+
+      <button
+        class="btn run4"
+        onclick="delivery('4')">
+        4
+      </button>
+
+      <button
+        class="btn run6"
+        onclick="delivery('6')">
+        6
+      </button>
+
+      <button
+        class="btn wicket"
+        onclick="delivery('W')">
+        W
+      </button>
+
+    </div>
+
+
+    <!-- SECONDARY TOUCH BUTTONS -->
+
+    <div class="smallButtons">
+
+      <button class="btn r1" onclick="delivery('1')">1</button>
+      <button class="btn r2" onclick="delivery('2')">2</button>
+      <button class="btn r3" onclick="delivery('3')">3</button>
+      <button class="btn r5" onclick="delivery('5')">5</button>
+
+      <button class="btn r0" onclick="delivery('0')">0</button>
+      <button class="btn wd" onclick="delivery('WD')">WD</button>
+      <button class="btn w1" onclick="delivery('W1')">W1</button>
+      <button class="btn nb" onclick="delivery('NB')">NB</button>
+
+      <button class="btn nb1" onclick="delivery('N1')">NB+1</button>
+      <button class="btn nb2" onclick="delivery('N2')">NB+2</button>
+      <button class="btn nb4" onclick="delivery('N4')">NB+4</button>
+      <button class="btn nb6" onclick="delivery('N6')">NB+6</button>
+
+      <button
+        class="btn reset"
+        onclick="resetGame()">
+        RESET / NEXT INNINGS
+      </button>
+
+    </div>
+
+  </main>
+
+
+  <!-- ANURAJ SIDE -->
+
+  <section class="sideCard">
+
+    <div class="sideTitle anuraj">
+      ANURAJ AATANKI
+    </div>
+
+    <div id="anurajBatters" class="battingList"></div>
+
+  </section>
+
+</div>
+
+
+<script>
+
+/* =========================================================
+   TEAMS
+========================================================= */
+
+const ANURAJ_TEAM=[
+  "Anuraj (C) 🏏",
+  "Abhinandan 🏏",
+  "BB Anil",
+  "Rishi",
+  "Chanakya",
+  "Nicky",
+  "Kasith",
+  "Pradeep",
+  "Sagar",
+  "Tiger",
+  "Ranger"
+];
+
+const ABHINANDAN_TEAM=[
+  "Rohit (C) 🏏",
+  "Gill 🏏",
+  "Virat 🏏",
+  "Shreyas 🏏",
+  "Rahul WK 🧤🏏",
+  "Axar 🏏🎯",
+  "Hardik 🏏🎯",
+  "Bumrah 🎯",
+  "Shami 🎯",
+  "Kuldeep 🎯",
+  "Bhuvneshwar 🎯"
+];
+
+const TEAM_A={
+  name:"Anuraj Aatanki",
+  players:ANURAJ_TEAM
+};
+
+const TEAM_B={
+  name:"Abhinandan Fussi",
+  players:ABHINANDAN_TEAM
+};
+
+
+/* =========================================================
+   GAME STATE
+========================================================= */
+
+let oversLimit=20;
+
+let matchStarted=false;
+let innings=1;
+let matchOver=false;
+
+let firstTeam=null;
+let secondTeam=null;
+
+let battingTeam=null;
+let bowlingTeam=null;
+
+let runs=0;
+let wickets=0;
+
+let legalBalls=0;
+let target=0;
+
+let striker=0;
+let nonStriker=1;
+let nextBatter=2;
+
+let freeHit=false;
+
+let overBalls=[];
+let overNumber=1;
+
+let firstInningsCards={};
+let secondInningsCards={};
+
+let audioCtx=null;
+
+
+/* =========================================================
+   SHORTCUT
+========================================================= */
+
+function $(id){
+  return document.getElementById(id);
+}
+
+
+/* =========================================================
+   PLAYER DATA
+========================================================= */
+
+function clonePlayers(team){
+
+  const obj={};
+
+  team.players.forEach((name,index)=>{
+
+    obj[name]={
+      name:name,
+      index:index,
+
+      runs:0,
+
+      /*
+        IMPORTANT:
+        Balls are stored permanently.
+        They are NEVER reset when the player is out.
+      */
+
+      balls:0,
+
+      out:false,
+
+      milestones:new Set()
+    };
+
+  });
+
+  return obj;
+}
+
+
+function currentCards(){
+
+  return innings===1
+    ?firstInningsCards
+    :secondInningsCards;
+
+}
+
+
+function formatOvers(balls){
+
+  return Math.floor(balls/6)+"."+(balls%6);
+
+}
+
+
+function legalBallsLimit(){
+
+  return oversLimit*6;
+
+}
+
+
+/* =========================================================
+   AUDIO
+========================================================= */
+
+function initAudio(){
+
+  try{
+
+    if(!audioCtx){
+
+      audioCtx=
+        new(window.AudioContext||window.webkitAudioContext)();
+
+    }
+
+    if(audioCtx.state==="suspended"){
+
+      audioCtx.resume();
+
+    }
+
+  }catch(e){}
+
+}
+
+
+function tone(
+  freq,
+  duration,
+  type="sine",
+  volume=.12
+){
+
+  try{
+
+    initAudio();
+
+    const now=audioCtx.currentTime;
+
+    const osc=audioCtx.createOscillator();
+
+    const gain=audioCtx.createGain();
+
+    osc.type=type;
+
+    osc.frequency.setValueAtTime(
+      freq,
+      now
+    );
+
+    gain.gain.setValueAtTime(
+      volume,
+      now
+    );
+
+    gain.gain.exponentialRampToValueAtTime(
+      .001,
+      now+duration
+    );
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start(now);
+    osc.stop(now+duration);
+
+  }catch(e){}
+
+}
+
+
+function soundFour(){
+
+  tone(523,.12,"triangle",.15);
+
+  setTimeout(
+    ()=>tone(659,.14,"triangle",.15),
+    80
+  );
+
+  setTimeout(
+    ()=>tone(784,.18,"triangle",.15),
+    160
+  );
+
+}
+
+
+function soundSix(){
+
+  tone(330,.12,"triangle",.18);
+
+  setTimeout(
+    ()=>tone(494,.14,"triangle",.18),
+    100
+  );
+
+  setTimeout(
+    ()=>tone(659,.18,"triangle",.18),
+    200
+  );
+
+  setTimeout(
+    ()=>tone(988,.30,"sine",.18),
+    300
+  );
+
+}
+
+
+function soundWicket(){
+
+  tone(
+    220,
+    .18,
+    "sawtooth",
+    .16
+  );
+
+  setTimeout(
+    ()=>tone(
+      130,
+      .30,
+      "sawtooth",
+      .16
+    ),
+    120
+  );
+
+}
+
+
+function soundMilestone(){
+
+  tone(523,.12,"sine",.18);
+
+  setTimeout(
+    ()=>tone(659,.12,"sine",.18),
+    120
+  );
+
+  setTimeout(
+    ()=>tone(784,.18,"sine",.18),
+    240
+  );
+
+}
+
+
+/* =========================================================
+   SETUP
+========================================================= */
+
+function setOvers(value){
+
+  if(matchStarted)return;
+
+  oversLimit=value;
+
+  $("overLimit").innerText=value;
+
+  $("tossBox").style.display="block";
+
+  document
+    .querySelectorAll("[data-overs]")
+    .forEach(btn=>{
+
+      btn.classList.toggle(
+        "selected",
+        Number(btn.dataset.overs)===value
+      );
+
+    });
+
+  $("tossResult").innerText=
+    "Choose Heads or Tails";
+
+}
+
+
+/* =========================================================
+   TOSS
+========================================================= */
+
+function doToss(choice){
+
+  if(matchStarted)return;
+
+  initAudio();
+
+  $("headsBtn").disabled=true;
+  $("tailsBtn").disabled=true;
+
+  const result=
+    Math.random()<.5
+      ?"Heads"
+      :"Tails";
+
+  $("coinStage").style.display="flex";
+
+  const coin=$("coin");
+
+  coin.classList.remove("coinFlip");
+
+  void coin.offsetWidth;
+
+  coin.classList.add("coinFlip");
+
+  $("coinText").innerText=
+    "FLIPPING...";
+
+  setTimeout(()=>{
+
+    $("coinStage").style.display="none";
+
+    if(choice===result){
+
+      $("tossResult").innerText=
+        "🎉 YOU WON THE TOSS! CHOOSE:";
+
+      $("choiceBox").style.display=
+        "block";
+
+      $("batFirstBtn").disabled=false;
+      $("bowlFirstBtn").disabled=false;
+
+    }else{
+
+      $("tossResult").innerText=
+        "ABHINANDAN FUSSI WON THE TOSS!";
+
+      $("batFirstBtn").disabled=true;
+      $("bowlFirstBtn").disabled=true;
+
+      setTimeout(()=>{
+
+        chooseDecision(
+          Math.random()<.5
+            ?"bat"
+            :"bowl"
+        );
+
+      },500);
+
+    }
+
+  },1500);
+
+}
+
+
+function chooseDecision(decision){
+
+  if(matchStarted)return;
+
+  startMatch(decision);
+
+}
+
+
+/* =========================================================
+   START MATCH
+========================================================= */
+
+function startMatch(decision){
+
+  matchStarted=true;
+  matchOver=false;
+  innings=1;
+
+  if(decision==="bat"){
+
+    firstTeam=TEAM_A;
+    secondTeam=TEAM_B;
+
+  }else{
+
+    firstTeam=TEAM_B;
+    secondTeam=TEAM_A;
+
+  }
+
+  battingTeam=firstTeam;
+  bowlingTeam=secondTeam;
+
+  runs=0;
+  wickets=0;
+  legalBalls=0;
+  target=0;
+
+  striker=0;
+  nonStriker=1;
+  nextBatter=2;
+
+  freeHit=false;
+
+  overBalls=[];
+  overNumber=1;
+
+  firstInningsCards=
+    clonePlayers(firstTeam);
+
+  secondInningsCards=
+    clonePlayers(secondTeam);
+
+  $("setup").style.display="none";
+
+  $("targetBanner").style.display="none";
+  $("potmBox").style.display="none";
+
+  renderAll();
+
+  message(
+    battingTeam.name+
+    " — INNINGS BEGINS"
+  );
+
+}
+
+
+/* =========================================================
+   DELIVERY
+========================================================= */
+
+function delivery(type){
+
+  if(!matchStarted||matchOver)return;
+
+  initAudio();
+
+  const cards=currentCards();
+
+  const batterName=
+    battingTeam.players[striker];
+
+  const batter=
+    cards[batterName];
+
+  if(!batter)return;
+
+  let display="";
+  let ballLabel="";
+  let legal=true;
+  let wicket=false;
+
+
+  /* =========================
+     DOT
+  ========================= */
+
+  if(type==="0"){
+
+    display="0 RUNS";
+    ballLabel="0";
+
+  }
+
+
+  /* =========================
+     ONE
+  ========================= */
+
+  else if(type==="1"){
+
+    runs+=1;
+    batter.runs+=1;
+
+    display="1 RUN";
+    ballLabel="1";
+
+    changeStrike();
+
+  }
+
+
+  /* =========================
+     TWO
+  ========================= */
+
+  else if(type==="2"){
+
+    runs+=2;
+    batter.runs+=2;
+
+    display="2 RUNS";
+    ballLabel="2";
+
+  }
+
+
+  /* =========================
+     THREE
+  ========================= */
+
+  else if(type==="3"){
+
+    runs+=3;
+    batter.runs+=3;
+
+    display="3 RUNS";
+    ballLabel="3";
+
+    changeStrike();
+
+  }
+
+
+  /* =========================
+     FOUR
+  ========================= */
+
+  else if(type==="4"){
+
+    runs+=4;
+    batter.runs+=4;
+
+    display="FOUR!!";
+    ballLabel="4";
+
+    celebrateBoundary("four");
+
+  }
+
+
+  /* =========================
+     FIVE
+  ========================= */
+
+  else if(type==="5"){
+
+    runs+=5;
+    batter.runs+=5;
+
+    display="5 RUNS";
+    ballLabel="5";
+
+  }
+
+
+  /* =========================
+     SIX
+  ========================= */
+
+  else if(type==="6"){
+
+    runs+=6;
+    batter.runs+=6;
+
+    display="SIX!!!";
+    ballLabel="6";
+
+    celebrateBoundary("six");
+
+  }
+
+
+  /* =========================
+     WICKET
+  ========================= */
+
+  else if(type==="W"){
+
+    /*
+      The wicket is on a LEGAL delivery.
+
+      The dismissed batter gets exactly ONE ball
+      added here, then that number is permanently
+      retained in the scorecard.
+
+      This prevents:
+      0(0) -> incorrect resets
+      and preserves:
+      6(2) OUT
+    */
+
+    batter.balls++;
+
+    batter.out=true;
+
+    wickets++;
+
+    display="WICKET";
+    ballLabel="W";
+
+    wicket=true;
+    legal=true;
+
+    soundWicket();
+    flash("wicket");
+
+
+    if(wickets>=10){
+
+      addOverBall(ballLabel);
+
+      renderAll();
+
+      setTimeout(
+        ()=>finishInnings(),
+        500
+      );
+
+      return;
+    }
+
+
+    const replacement=
+      battingTeam.players[nextBatter];
+
+    if(replacement){
+
+      striker=
+        battingTeam.players.indexOf(
+          replacement
+        );
+
+      nextBatter++;
+
+    }
+
+  }
+
+
+  /* =========================
+     WICKET + 1
+  ========================= */
+
+  else if(type==="W1"){
+
+    /*
+      W+1 is treated as an extra,
+      so it does NOT consume a legal ball.
+    */
+
+    batter.balls++;
+
+    batter.out=true;
+
+    wickets++;
+
+    runs++;
+
+    display="WICKET + 1";
+    ballLabel="W+1";
+
+    wicket=true;
+
+    legal=false;
+
+    soundWicket();
+    flash("wicket");
+
+
+    if(wickets>=10){
+
+      addOverBall(ballLabel);
+
+      renderAll();
+
+      setTimeout(
+        ()=>finishInnings(),
+        500
+      );
+
+      return;
+    }
+
+
+    const replacement=
+      battingTeam.players[nextBatter];
+
+    if(replacement){
+
+      striker=
+        battingTeam.players.indexOf(
+          replacement
+        );
+
+      nextBatter++;
+
+    }
+
+  }
+
+
+  /* =========================
+     WIDE
+  ========================= */
+
+  else if(type==="WD"){
+
+    runs++;
+
+    legal=false;
+
+    display="WIDE";
+    ballLabel="WD";
+
+  }
+
+
+  /* =========================
+     NO BALL
+  ========================= */
+
+  else if(type==="NB"){
+
+    runs++;
+
+    legal=false;
+
+    freeHit=true;
+
+    display="NO BALL";
+    ballLabel="NB";
+
+  }
+
+
+  /* =========================
+     NB + 1
+  ========================= */
+
+  else if(type==="N1"){
+
+    runs+=2;
+
+    batter.runs++;
+
+    legal=false;
+
+    freeHit=true;
+
+    display="NO BALL + 1";
+    ballLabel="NB+1";
+
+    changeStrike();
+
+  }
+
+
+  /* =========================
+     NB + 2
+  ========================= */
+
+  else if(type==="N2"){
+
+    runs+=3;
+
+    batter.runs+=2;
+
+    legal=false;
+
+    freeHit=true;
+
+    display="NO BALL + 2";
+    ballLabel="NB+2";
+
+  }
+
+
+  /* =========================
+     NB + FOUR
+  ========================= */
+
+  else if(type==="N4"){
+
+    runs+=5;
+
+    batter.runs+=4;
+
+    legal=false;
+
+    freeHit=true;
+
+    display="NO BALL + FOUR";
+    ballLabel="NB+4";
+
+    celebrateBoundary("four");
+
+  }
+
+
+  /* =========================
+     NB + SIX
+  ========================= */
+
+  else if(type==="N6"){
+
+    runs+=7;
+
+    batter.runs+=6;
+
+    legal=false;
+
+    freeHit=true;
+
+    display="NO BALL + SIX";
+    ballLabel="NB+6";
+
+    celebrateBoundary("six");
+
+  }
+
+
+  /* =======================================================
+     EVERY DELIVERY GOES INTO OVER DISPLAY
+  ======================================================= */
+
+  addOverBall(ballLabel);
+
+
+  /* =======================================================
+     INDIVIDUAL MILESTONE
+  ======================================================= */
+
+  /*
+    Only batter runs matter.
+
+    Team score is NOT used.
+
+    Therefore 500 means the individual batter
+    has personally reached 500 runs.
+  */
+
+  if(!wicket){
+
+    checkMilestone(batter);
+
+  }
+
+
+  /* =======================================================
+     LEGAL BALL
+  ======================================================= */
+
+  if(legal){
+
+    /*
+      Exactly one legal ball gets added.
+
+      This is the critical fix for:
+      0(0)
+      -> 6(1)*
+      -> 6(2) OUT
+
+      Balls are never reset.
+    */
+
+    batter.balls++;
+
+    legalBalls++;
+
+
+    if(freeHit){
+
+      freeHit=false;
+
+    }
+
+
+    if(legalBalls%6===0){
+
+      changeStrike();
+
+
+      setTimeout(()=>{
+
+        if(
+          matchOver||
+          legalBalls>=legalBallsLimit()
+        ){
+          return;
+        }
+
+        overBalls=[];
+        overNumber++;
+
+        renderOver();
+
+      },700);
+
+    }
+
+  }
+
+
+  /* =======================================================
+     CHASE
+  ======================================================= */
+
+  if(
+    innings===2 &&
+    runs>=target
+  ){
+
+    renderAll();
+
+    setTimeout(
+      ()=>finishChase(),
+      300
+    );
+
+    return;
+
+  }
+
+
+  /* =======================================================
+     OVERS COMPLETE
+  ======================================================= */
+
+  if(
+    legalBalls>=legalBallsLimit()
+  ){
+
+    renderAll();
+
+    setTimeout(
+      ()=>finishInnings(),
+      350
+    );
+
+    return;
+
+  }
+
+
+  renderAll();
+
+
+  /*
+    Boundary celebration stays visible.
+  */
+
+  if(freeHit){
+
+    message("★ FREE HIT ★");
+
+  }
+
+  else if(
+    type!=="4" &&
+    type!=="6" &&
+    type!=="N4" &&
+    type!=="N6" &&
+    !wicket
+  ){
+
+    message(display);
+
+  }
+
+}
+
+
+/* =========================================================
+   STRIKE
+========================================================= */
+
+function changeStrike(){
+
+  const temp=striker;
+
+  striker=nonStriker;
+  nonStriker=temp;
+
+}
+
+
+/* =========================================================
+   OVER DISPLAY
+========================================================= */
+
+function addOverBall(ball){
+
+  /*
+    Never ignore a valid delivery.
+
+    This means:
+    0
+    1
+    2
+    3
+    4
+    5
+    6
+    W
+    WD
+    NB
+    NB+1
+    NB+2
+    NB+4
+    NB+6
+    W+1
+
+    all appear.
+  */
+
+  if(!ball)return;
+
+  overBalls.push(ball);
+
+  renderOver();
+
+}
+
+
+function renderOver(){
+
+  $("overBox").innerText=
+    "Over "+overNumber+": "+
+    (
+      overBalls.length
+        ?overBalls.join(" ")
+        :"—"
+    );
+
+}
+
+
+/* =========================================================
+   MILESTONES
+========================================================= */
+
+function checkMilestone(player){
+
+  /*
+    Milestones:
+    50
+    100
+    150
+    200
+    ...
+    500
+  */
+
+  const reached=
+    Math.floor(player.runs/50)*50;
+
+
+  if(
+    reached>=50 &&
+    !player.milestones.has(reached)
+  ){
+
+    player.milestones.add(reached);
+
+    showMilestone(
+      reached,
+      player.name
+    );
+
+    soundMilestone();
+
+
+    /*
+      500 ONLY:
+      launch the supplied PNG.
+    */
+
+    if(reached===500){
+
+      showMega500(
+        player.name
+      );
+
+    }
+
+  }
+
+}
+
+
+/* =========================================================
+   NORMAL MILESTONE
+========================================================= */
+
+function showMilestone(
+  value,
+  playerName
+){
+
+  const m=$("milestone");
+
+  m.innerText=value;
+
+  m.classList.remove(
+    "milestoneShow"
+  );
+
+  void m.offsetWidth;
+
+  m.classList.add(
+    "milestoneShow"
+  );
+
+
+  setTimeout(()=>{
+
+    if(
+      m.innerText===String(value)
+    ){
+
+      m.classList.remove(
+        "milestoneShow"
+      );
+
+    }
+
+  },1050);
+
+
+  if(value>=100){
+
+    const cricket=
+      $("flyingCricket");
+
+    cricket.classList.remove(
+      "flyCricket"
+    );
+
+    void cricket.offsetWidth;
+
+    cricket.classList.add(
+      "flyCricket"
+    );
+
+  }
+
+
+  const cleanName=
+    playerName.replace(
+      / 🏏.*$/,
+      ""
+    );
+
+
+  /*
+    500 gets its own special
+    score-checker message.
+  */
+
+  if(value!==500){
+
+    message(
+      "⭐ "+value+
+      " FOR "+cleanName
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   500 MEGA CELEBRATION
+========================================================= */
+
+function showMega500(playerName){
+
+  const mega=$("mega500");
+
+  /*
+    Reset animation completely.
+    This makes repeated celebrations
+    reliable without animation glitches.
+  */
+
+  mega.classList.remove(
+    "mega500Show"
+  );
+
+  mega.style.opacity="0";
+
+  void mega.offsetWidth;
+
+  mega.classList.add(
+    "mega500Show"
+  );
+
+
+  const cleanName=
+    playerName.replace(
+      / 🏏.*$/,
+      ""
+    );
+
+
+  /*
+    The score checker clearly says 500 RUNS
+    while the PNG rapidly flies from left
+    through the screen and exits right.
+  */
+
+  message(
+    "🏆 500 RUNS — "+cleanName
+  );
+
+
+  setTimeout(()=>{
+
+    mega.classList.remove(
+      "mega500Show"
+    );
+
+  },1200);
+
+}
+
+
+/* =========================================================
+   BOUNDARY EFFECT
+========================================================= */
+
+function celebrateBoundary(type){
+
+  flash(type);
+
+  const jet=
+    $("jetEffect");
+
+  jet.classList.remove(
+    "jetFly"
+  );
+
+  void jet.offsetWidth;
+
+  jet.classList.add(
+    "jetFly"
+  );
+
+
+  if(type==="six"){
+
+    soundSix();
+
+    message("SIX!!!");
+
+  }else{
+
+    soundFour();
+
+    message("FOUR!!");
+
+  }
+
+}
+
+
+/* =========================================================
+   SCREEN FLASH
+========================================================= */
+
+function flash(type){
+
+  const screen=
+    $("scoreScreen");
+
+  screen.classList.remove(
+    "flashSix",
+    "flashFour",
+    "flashWicket"
+  );
+
+  void screen.offsetWidth;
+
+
+  if(type==="six"){
+
+    screen.classList.add(
+      "flashSix"
+    );
+
+  }
+
+  if(type==="four"){
+
+    screen.classList.add(
+      "flashFour"
+    );
+
+  }
+
+  if(type==="wicket"){
+
+    screen.classList.add(
+      "flashWicket"
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   MESSAGE
+========================================================= */
+
+function message(text){
+
+  $("message").innerText=text;
+
+}
+
+
+/* =========================================================
+   FIRST INNINGS FINISH
+========================================================= */
+
+function finishInnings(){
+
+  if(matchOver)return;
+
+
+  if(innings===1){
+
+    target=runs+1;
+
+    innings=2;
+
+    battingTeam=secondTeam;
+    bowlingTeam=firstTeam;
+
+    runs=0;
+    wickets=0;
+    legalBalls=0;
+
+    striker=0;
+    nonStriker=1;
+    nextBatter=2;
+
+    freeHit=false;
+
+    overBalls=[];
+    overNumber=1;
+
+    secondInningsCards=
+      clonePlayers(secondTeam);
+
+
+    $("targetBanner").style.display=
+      "block";
+
+    $("targetBanner").innerText=
+      "TARGET: "+target+
+      " — NEED "+target+" RUNS";
+
+
+    renderAll();
+
+
+    message(
+      "🏏 "+
+      battingTeam.name+
+      " — CHASE BEGINS"
+    );
+
+    return;
+
+  }
+
+
+  finishMatch();
+
+}
+
+
+/* =========================================================
+   CHASE WON
+========================================================= */
+
+function finishChase(){
+
+  if(matchOver)return;
+
+  matchOver=true;
+
+  const wicketsRemaining=
+    10-wickets;
+
+
+  $("targetBanner").style.display=
+    "block";
+
+  $("targetBanner").innerText=
+    "🏆 "+
+    battingTeam.name+
+    " WINS BY "+
+    wicketsRemaining+
+    " WICKETS!";
+
+
+  message("🏆 MATCH WON!");
+
+  renderAll();
+
+  playerOfTheMatch();
+
+}
+
+
+/* =========================================================
+   MATCH FINISH
+========================================================= */
+
+function finishMatch(){
+
+  if(matchOver)return;
+
+  matchOver=true;
+
+  const secondScore=runs;
+
+
+  if(secondScore<target){
+
+    const margin=
+      target-1-secondScore;
+
+
+    $("targetBanner").style.display=
+      "block";
+
+    $("targetBanner").innerText=
+      "🏆 "+
+      firstTeam.name+
+      " WINS BY "+
+      margin+
+      " RUNS!";
+
+
+    message(
+      "🏆 MATCH OVER"
+    );
+
+  }
+
+
+  renderAll();
+
+  playerOfTheMatch();
+
+}
+
+
+/* =========================================================
+   INNINGS SCORE
+========================================================= */
+
+function getInningsScore(team){
+
+  const cards=
+    team===firstTeam
+      ?firstInningsCards
+      :secondInningsCards;
+
+
+  return Object.values(cards)
+    .reduce(
+      (sum,p)=>sum+p.runs,
+      0
+    );
+
+}
+
+
+/* =========================================================
+   RENDER EVERYTHING
+========================================================= */
+
+function renderAll(){
+
+  $("runs").innerText=runs;
+
+  $("wickets").innerText=wickets;
+
+  $("overText").innerText=
+    formatOvers(legalBalls);
+
+  $("overLimit").innerText=
+    oversLimit;
+
+
+  $("teamBatting").innerText=
+    "Batting: "+
+    (
+      battingTeam
+        ?battingTeam.name
+        :"Anuraj Aatanki"
+    );
+
+
+  renderSummary();
+
+  renderCurrentBatters();
+
+  renderBattingCards();
+
+  renderOver();
+
+  renderTarget();
+
+}
+
+
+/* =========================================================
+   SUMMARY
+========================================================= */
+
+function renderSummary(){
+
+  if(!firstTeam){
+
+    $("summary").innerHTML=
+      "Anuraj: 0/0<br>"+
+      "Abhinandan: Yet to bat";
+
+    return;
+
+  }
+
+
+  let firstScore=0;
+  let firstWickets=0;
+
+
+  Object.values(
+    firstInningsCards
+  ).forEach(p=>{
+
+    firstScore+=p.runs;
+
+    if(p.out){
+      firstWickets++;
+    }
+
+  });
+
+
+  const firstLabel=
+    firstTeam===TEAM_A
+      ?"Anuraj"
+      :"Abhinandan";
+
+  const secondLabel=
+    secondTeam===TEAM_A
+      ?"Anuraj"
+      :"Abhinandan";
+
+
+  if(innings===1){
+
+    $("summary").innerHTML=
+      firstLabel+
+      ": "+
+      firstScore+
+      "/"+
+      firstWickets+
+      "<br>"+
+      secondLabel+
+      ": Yet to bat";
+
+  }else{
+
+    $("summary").innerHTML=
+      firstLabel+
+      ": "+
+      firstScore+
+      "/"+
+      firstWickets+
+      "<br>"+
+      secondLabel+
+      ": "+
+      runs+
+      "/"+
+      wickets;
+
+  }
+
+}
+
+
+/* =========================================================
+   CURRENT BATTERS
+========================================================= */
+
+function renderCurrentBatters(){
+
+  if(!battingTeam){
+
+    $("strikerBox").innerText=
+      "🏏 —";
+
+    $("nonStrikerBox").innerText=
+      "—";
+
+    return;
+
+  }
+
+
+  const cards=
+    currentCards();
+
+
+  const s=
+    battingTeam.players[striker];
+
+  const ns=
+    battingTeam.players[nonStriker];
+
+
+  const strikerData=
+    cards[s];
+
+  const nonData=
+    cards[ns];
+
+
+  /*
+    Never create an undefined player.
+
+    This keeps the phone display stable
+    after wickets.
+  */
+
+  if(!strikerData||!nonData){
+
+    return;
+
+  }
+
+
+  const strikerSR=
+    strikerData.balls>0
+      ?(
+        strikerData.runs/
+        strikerData.balls*
+        100
+      ).toFixed(1)
+      :"0.0";
+
+
+  const nonStrikerSR=
+    nonData.balls>0
+      ?(
+        nonData.runs/
+        nonData.balls*
+        100
+      ).toFixed(1)
+      :"0.0";
+
+
+  $("strikerBox").innerHTML=
+    "🏏 "+
+    s+
+    " "+
+    strikerData.runs+
+    "("+
+    strikerData.balls+
+    ")* "+
+    '<span class="currentSR">SR '+
+    strikerSR+
+    "</span>";
+
+
+  $("nonStrikerBox").innerHTML=
+    ns+
+    " "+
+    nonData.runs+
+    "("+
+    nonData.balls+
+    ") "+
+    '<span class="currentSR">SR '+
+    nonStrikerSR+
+    "</span>";
+
+}
+
+
+/* =========================================================
+   FULL SCORECARDS
+========================================================= */
+
+function renderBattingCards(){
+
+  renderTeamCard(
+    TEAM_A,
+    $("anurajBatters")
+  );
+
+  renderTeamCard(
+    TEAM_B,
+    $("abhiBatters")
+  );
+
+}
+
+
+/* =========================================================
+   TEAM SCORECARD
+========================================================= */
+
+function renderTeamCard(
+  team,
+  container
+){
+
+  let cards=null;
+
+
+  if(team===firstTeam){
+
+    cards=firstInningsCards;
+
+  }
+
+  else if(
+    team===secondTeam &&
+    innings===2
+  ){
+
+    cards=secondInningsCards;
+
+  }
+
+  else if(
+    team===secondTeam &&
+    !matchStarted
+  ){
+
+    cards=null;
+
+  }
+
+  else if(
+    team===TEAM_A &&
+    secondInningsCards[
+      team.players[0]
+    ]
+  ){
+
+    cards=secondInningsCards;
+
+  }
+
+  else if(
+    team===TEAM_B &&
+    secondInningsCards[
+      team.players[0]
+    ]
+  ){
+
+    cards=secondInningsCards;
+
+  }
+
+
+  container.innerHTML="";
+
+
+  team.players.forEach(
+    (name,index)=>{
+
+      const p=
+        cards &&
+        cards[name]
+          ?cards[name]
+          :{
+            name:name,
+            runs:0,
+            balls:0,
+            out:false
+          };
+
+
+      const isActive=
+        battingTeam===team &&
+        (
+          index===striker ||
+          index===nonStriker
+        ) &&
+        !p.out;
+
+
+      const row=
+        document.createElement("div");
+
+
+      row.className=
+        "playerRow"+
+        (
+          isActive
+            ?" active"
+            :""
+        )+
+        (
+          p.out
+            ?" out"
+            :""
+        );
+
+
+      let status=
+        "Yet to bat";
+
+      let sr="0.0";
+
+
+      if(
+        p.balls>0 ||
+        p.runs>0 ||
+        p.out
+      ){
+
+        sr=
+          p.balls>0
+            ?(
+              p.runs/
+              p.balls*
+              100
+            ).toFixed(1)
+            :"0.0";
+
+
+        /*
+          CRITICAL:
+          p.balls is never reset.
+
+          So:
+
+          first legal ball:
+          6(1)*
+
+          second legal ball + wicket:
+          6(2) OUT
+
+          The old incorrect reset behaviour
+          cannot occur.
+        */
+
+        status=
+          p.runs+
+          "("+
+          p.balls+
+          ")"+
+          (
+            p.out
+              ?" OUT"
+              :"*"
+          );
+
+      }
+
+
+      row.innerHTML=
+        '<div class="playerName">'+
+        (
+          isActive
+            ?"🏏 "
+            :""
+        )+
+        name+
+        "</div>"+
+        '<div class="playerStats">'+
+        status+
+        (
+          p.balls>0 ||
+          p.runs>0 ||
+          p.out
+            ?'<span class="playerSR">SR: '+
+              sr+
+              "</span>"
+            :""
+        )+
+        "</div>";
+
+
+      container.appendChild(row);
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   TARGET
+========================================================= */
+
+function renderTarget(){
+
+  if(
+    innings!==2 ||
+    !target
+  ){
+
+    $("targetBanner").style.display=
+      "none";
+
+    return;
+
+  }
+
+
+  $("targetBanner").style.display=
+    "block";
+
+
+  if(matchOver)return;
+
+
+  const needed=
+    Math.max(
+      0,
+      target-runs
+    );
+
+
+  const ballsLeft=
+    Math.max(
+      0,
+      legalBallsLimit()-
+      legalBalls
+    );
+
+
+  $("targetBanner").innerText=
+    "TARGET: "+
+    target+
+    " | NEED "+
+    needed+
+    " FROM "+
+    ballsLeft+
+    " BALLS";
+
+}
+
+
+/* =========================================================
+   PLAYER OF THE MATCH
+========================================================= */
+
+function playerOfTheMatch(){
+
+  const candidates=[];
+
+
+  [
+    firstInningsCards,
+    secondInningsCards
+  ].forEach(cards=>{
+
+    Object.values(cards)
+      .forEach(p=>{
+
+        if(!p)return;
+
+
+        candidates.push({
+
+          name:p.name,
+
+          runs:p.runs||0,
+
+          balls:p.balls||0,
+
+          out:!!p.out,
+
+          sr:
+            p.balls>0
+              ?(
+                p.runs/
+                p.balls*
+                100
+              )
+              :0
+
+        });
+
+      });
+
+  });
+
+
+  if(!candidates.length){
+    return null;
+  }
+
+
+  candidates.sort(
+    (a,b)=>{
+
+      if(b.runs!==a.runs){
+
+        return b.runs-a.runs;
+
+      }
+
+      if(b.sr!==a.sr){
+
+        return b.sr-a.sr;
+
+      }
+
+      if(a.balls!==b.balls){
+
+        return a.balls-b.balls;
+
+      }
+
+      if(a.out!==b.out){
+
+        return a.out
+          ?1
+          :-1;
+
+      }
+
+      return a.name.localeCompare(
+        b.name
+      );
+
+    }
+  );
+
+
+  const best=
+    candidates[0];
+
+
+  $("potmBox").style.display=
+    "block";
+
+
+  $("potmBox").innerHTML=
+    "🏆 PLAYER OF THE MATCH<br>"+
+    '<strong style="font-size:16px;color:#fde047;">'+
+    best.name+
+    "</strong><br>"+
+    best.runs+
+    "("+
+    best.balls+
+    ")"+
+    " &nbsp; | &nbsp; SR: "+
+    best.sr.toFixed(1);
+
+
+  return best;
+
+}
+
+
+/* =========================================================
+   RESET
+========================================================= */
+
+function resetGame(){
+
+  matchStarted=false;
+  matchOver=false;
+
+  innings=1;
+
+  firstTeam=null;
+  secondTeam=null;
+
+  battingTeam=null;
+  bowlingTeam=null;
+
+  runs=0;
+  wickets=0;
+  legalBalls=0;
+  target=0;
+
+  striker=0;
+  nonStriker=1;
+  nextBatter=2;
+
+  freeHit=false;
+
+  overBalls=[];
+  overNumber=1;
+
+  firstInningsCards={};
+  secondInningsCards={};
+
+
+  $("setup").style.display=
+    "block";
+
+  $("tossBox").style.display=
+    "none";
+
+  $("choiceBox").style.display=
+    "none";
+
+
+  $("headsBtn").disabled=false;
+  $("tailsBtn").disabled=false;
+
+  $("batFirstBtn").disabled=false;
+  $("bowlFirstBtn").disabled=false;
+
+
+  $("tossResult").innerText=
+    "Choose Heads or Tails";
+
+
+  document
+    .querySelectorAll("[data-overs]")
+    .forEach(btn=>{
+
+      btn.classList.remove(
+        "selected"
+      );
+
+    });
+
+
+  $("targetBanner").style.display=
+    "none";
+
+
+  $("potmBox").style.display=
+    "none";
+
+  $("potmBox").innerHTML="";
+
+
+  $("message").innerText=
+    "READY";
+
+
+  $("runs").innerText="0";
+
+  $("wickets").innerText="0";
+
+  $("overText").innerText="0.0";
+
+  $("overLimit").innerText=
+    oversLimit;
+
+  $("overBox").innerText=
+    "Over 1: —";
+
+
+  $("strikerBox").innerText=
+    "🏏 —";
+
+  $("nonStrikerBox").innerText=
+    "—";
+
+
+  $("jetEffect").classList.remove(
+    "jetFly"
+  );
+
+  $("flyingCricket").classList.remove(
+    "flyCricket"
+  );
+
+  $("milestone").classList.remove(
+    "milestoneShow"
+  );
+
+  $("mega500").classList.remove(
+    "mega500Show"
+  );
+
+  $("mega500").style.opacity="0";
+
+
+  renderBattingCards();
+
+}
+
+
+/* =========================================================
+   INITIAL RENDER
+========================================================= */
+
+renderAll();
+
+</script>
+
+</body>
+</html>
